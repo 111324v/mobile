@@ -1,0 +1,258 @@
+% !TEX program = xelatex
+% ============================================================
+%  第十一届（2026年）中国高校计算机大赛—移动应用创新赛
+%  初赛作品说明文档 · 光合作用 Photosynthesis
+% ============================================================
+
+\documentclass[11pt, a4paper]{article}
+
+% ── 中文 + 字体 ───────────────────────────────────────────
+% 注意：PingFang SC 是苹果专属字体，Overleaf Linux 服务器无法使用。
+% 此处用 Noto Sans CJK SC 替代（风格最接近，Overleaf 内置）。
+% 若在本地 macOS + XeLaTeX 编译，可将下方字体名改为 PingFang SC。
+\usepackage{fontspec}
+\usepackage{xeCJK}
+\setmainfont{Linux Libertine O}[
+    BoldFont       = Linux Libertine O Bold,
+    ItalicFont     = Linux Libertine O Italic,
+    BoldItalicFont = Linux Libertine O Bold Italic
+]
+\setsansfont{Linux Biolinum O}
+\setCJKmainfont{Noto Sans CJK SC}[BoldFont=Noto Sans CJK SC Bold]
+\setCJKsansfont{Noto Sans CJK SC}
+
+% ── 页面 ──────────────────────────────────────────────────
+\usepackage[
+    a4paper,
+    top=2.0cm, bottom=2.2cm,
+    left=2.2cm, right=2.2cm,
+    headheight=13pt
+]{geometry}
+
+% ── 段落 ──────────────────────────────────────────────────
+\usepackage{parskip}
+\usepackage{indentfirst}
+\setlength{\parindent}{2em}
+\setlength{\parskip}{0.3em}
+\usepackage{setspace}
+\setstretch{1.25}
+
+% ── 颜色（全文仅用一个颜色 #2A2A2A）─────────────────────
+\usepackage[dvipsnames, svgnames, table]{xcolor}
+\definecolor{C}{HTML}{2A2A2A}      % 全文唯一正文色
+\definecolor{Row}{HTML}{F4F4F4}    % 表格交替行（中性浅灰）
+
+% ── 表格 ──────────────────────────────────────────────────
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\renewcommand{\arraystretch}{1.35}
+
+% ── 列表 ──────────────────────────────────────────────────
+\usepackage{enumitem}
+\setlist[itemize]{
+    leftmargin=1.8em, itemsep=0.1em, topsep=0.25em,
+    label={\textcolor{C}{\small\textbullet}}
+}
+\setlist[enumerate]{leftmargin=1.8em, itemsep=0.1em, topsep=0.25em}
+
+% ── 章节标题 ──────────────────────────────────────────────
+\usepackage{titlesec}
+
+\titleformat{\section}
+    {\large\bfseries\sffamily\color{C}}
+    {\thesection.}
+    {0.5em}
+    {}
+
+\titleformat{\subsection}
+    {\normalsize\bfseries\itshape\color{C}}
+    {}
+    {0pt}
+    {}
+
+\titlespacing*{\section}{0pt}{1.4em}{0.5em}
+\titlespacing*{\subsection}{0pt}{0.8em}{0.2em}
+
+% ── 页眉页脚 ──────────────────────────────────────────────
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+\fancyhead[L]{{\small\color{C}\itshape 光合作用 · Photosynthesis}}
+\fancyhead[R]{{\small\color{C} 第十一届中国高校计算机大赛}}
+\fancyfoot[C]{{\small\color{C}\thepage}}
+
+% ── 超链接（无彩色）──────────────────────────────────────
+\usepackage[hidelinks]{hyperref}
+
+% ── 自定义命令 ────────────────────────────────────────────
+% \kw 只加粗，不变色
+\newcommand{\kw}[1]{\textbf{#1}}
+
+% ============================================================
+\begin{document}
+\color{C}
+% ============================================================
+
+% ── 标题区 ────────────────────────────────────────────────
+\begin{center}
+    {\small\color{C}
+        第十一届（2026年）中国高校计算机大赛 · 移动应用创新赛 · 初赛作品说明文档}
+
+    \vspace{0.5em}
+
+    {\fontsize{22pt}{28pt}\selectfont\bfseries\sffamily\color{C}
+        光合作用}
+    \quad
+    {\fontsize{13pt}{18pt}\selectfont\itshape\color{C}
+        Photosynthesis}
+
+    \vspace{0.4em}
+
+    {\small\color{C}
+        心理健康 · 行为激活 App \enspace·\enspace
+        iOS · iPhone + Apple Watch \enspace·\enspace
+        启明赛道 · v3.1}
+\end{center}
+
+\vspace{0.6em}
+\noindent{\color{C!30}\rule{\linewidth}{0.5pt}}
+\vspace{0.4em}
+
+% ============================================================
+
+% ────────────────────────────────────────────────────────────
+\section{问题背景与用户分析}
+% ────────────────────────────────────────────────────────────
+
+\subsection*{社会背景}
+
+中国抑郁症患者已超过 \kw{9500 万}（《中国精神卫生调查》2023），其中 \kw{70\%} 的患者描述"早晨是最难熬的时刻"。远程办公常态化使城市白领日均户外时长降至 \kw{15 分钟以下}，18--35 岁青年中 41\% 自述"周末除了点外卖不出门"，维生素 D 缺乏率超过 70\%。
+
+\subsection*{临床依据}
+
+每日 30 分钟户外光照的抗抑郁疗效约等于药物的一半（Stanford Medicine，2023）。\kw{行为激活（Behavioral Activation）}——通过低门槛行动帮助患者重新接触外部环境——已被纳入中国《抑郁障碍防治指南 2024》一线干预措施。
+
+\subsection*{双目标用户群}
+
+\begin{itemize}
+    \item \textbf{主用户：抑郁症康复期患者。}需要极低门槛的日常行为引导，任何惩罚机制（如"打卡失败""连续天数中断"）都可能加重病情。
+    \item \textbf{次用户：长期宅家青年。}缺乏靠近自然的驱动力，需要正向反馈而非数字指标压迫。
+\end{itemize}
+
+两类用户共同的\kw{第一动作}：每天，对着此刻能看到的"自然"拍一张照片——窗帘缝里的晨光、阳台的盆栽、街角的天空、雨后的水洼皆可。行动门槛约 10 秒，任何场景均可完成。
+
+
+% ────────────────────────────────────────────────────────────
+\section{相关竞品分析}
+% ────────────────────────────────────────────────────────────
+
+\subsection*{现有方案的共同缺陷}
+
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\bfseries}p{3.2cm} X X}
+    \toprule
+    \rowcolor{Row}
+    竞品 & 定位 & 核心缺陷 \\
+    \midrule
+    Calm / Headspace  & 冥想引导 & 要求主动打开练习，抑郁期用户门槛过高 \\
+    \rowcolor{Row}
+    Forest 专注森林   & 专注种树 & 树会死——惩罚机制对抑郁用户反人性 \\
+    Streaks / Habitica & 习惯打卡 & 连续天数中断即失败，加重挫败感 \\
+    \rowcolor{Row}
+    Daylio            & 心情打卡 & 量化心情分数，将感受变为绩效考核 \\
+    Reflectly         & AI 日记  & 需要写字，零文字门槛无从实现 \\
+    \rowcolor{Row}
+    Apple Health      & 健康数据 & 数据工具，非情感陪伴 \\
+    \bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection*{与最近竞品 Forest 的核心对比}
+
+Forest 服务"能主动控制自己"的健康人群，以\textbf{单一动作}（专注时长）为奖励标的，树可以死亡，不存在生态化反馈。\kw{光合作用}以四要素生态系统认可\textbf{所有自然场景}，植物永不死亡，多样均衡的生活方式带来更高生长加成。两者面向截然不同的用户群，不构成直接替代。
+
+
+% ────────────────────────────────────────────────────────────
+\section{可行性分析}
+% ────────────────────────────────────────────────────────────
+
+\subsection*{技术可行性}
+
+App 核心链路完全基于苹果原生框架，\kw{全程离线、照片不上云}：
+
+\begin{enumerate}
+    \item \textbf{图像识别（CoreML + Vision Framework）：}亮度直方图规则模型（$<$1\,ms）计算光要素；Apple Vision 自带 SceneClassifier 识别天空、降水、水体；HSV 色彩空间分析计算气要素；5\,MB 语义分割模型识别植被占比计算境要素。
+    \item \textbf{数据层（CoreData / SQLite）：}整个数据模型仅 16 个基础类型字段，全部派生数据（心情态、光合值）由纯函数实时计算不入库，单一数据源。
+    \item \textbf{渲染层（SwiftUI）：}植物双层状态引擎通过 SwiftUI 动画合成，呼吸式渐变周期 $\geq 4$\,s，低于人体心跳频率。
+    \item \textbf{端外触达：}Apple Watch 复杂功能、Live Activity 灵动岛、桌面 Widget 均为苹果一方框架，零第三方依赖。
+\end{enumerate}
+
+\subsection*{临床可行性}
+
+行为激活疗法已收录于中国《抑郁障碍防治指南 2024》。产品将其精简为"拍一张照片"（约 10 秒），远低于冥想类 App 完成率（$<30\%$），且不存在任何失败惩罚机制。
+
+\subsection*{开发与合规可行性}
+
+初赛交付物：7 张高保真原型图 + 30 秒概念视频 + 说明文档，4 种心情态 $\times$ 3 种物种（12 张插画）配合 Figma，27 天内可完整交付。产品定位为"行为陪伴工具"而非医疗器械，照片完全本地存储，满足个人信息保护法合规要求。
+
+
+% ────────────────────────────────────────────────────────────
+\section{App 创新点}
+% ────────────────────────────────────────────────────────────
+
+\subsection*{创新一：四要素生态化模型}
+
+每张照片经 CoreML 本地推理，输出四个 0--3 分整数，单张光合值 $= \text{光} + \text{水} + \text{气} + \text{境} \in [0,12]$，乘以近 7 天\kw{多样性系数}（$\times 0.6$--$1.3$）与\kw{物种消化系数}，形成完整生态化成长算法。区别于任何竞品的核心：\textbf{过犹不及}——任何单一要素过量都触发植物"萎靡"反馈，倡导多维均衡而非单一极致。
+
+\begin{center}
+\begin{tabular}{lccccr}
+    \toprule
+    \rowcolor{Row}
+    场景示例 & 光 & 水 & 气 & 境 & 光合值 \\
+    \midrule
+    床头窗帘缝晨光 & 1 & 0 & 0 & 0 & \textbf{1} \\
+    \rowcolor{Row}
+    阳台一盆绿植   & 2 & 0 & 0 & 1 & \textbf{3} \\
+    雨打玻璃       & 1 & 2 & 1 & 0 & \textbf{4} \\
+    \rowcolor{Row}
+    街角抬头看蓝天 & 3 & 0 & 3 & 1 & \textbf{7} \\
+    雨后初晴的河边 & 2 & 3 & 2 & 2 & \textbf{9} \\
+    \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection*{创新二：双层植物状态机}
+
+\begin{itemize}
+    \item \textbf{主层（只增不减）：}累计光合值决定生命阶段（种子 $\to$ 萌芽 $\to$ 幼苗 $\to$ 茁壮 $\to$ 开花 $\to$ 永生），长期成果永不丢失。
+    \item \textbf{子层（动态可逆）：}近 7 天四要素分布决定 11 种植物心情态，拍一张不同要素的照片即可立即恢复，零沉没成本。
+\end{itemize}
+
+\subsection*{创新三：反打卡设计哲学}
+
+\kw{不计连续天数 · 不量化心情 · 不显示分数 · 植物永不死亡}——四重反打卡机制，市场所有竞品均未实现。所有负面状态文案主语是植物（"植物想换换"），而非对用户的审判。
+
+\subsection*{创新四：物种性格映射}
+
+三种初始植物（薄荷·韧性派、向日葵·阳光派、苔藓·静谧派）对四要素有差异化消化系数，在不引入新数据表、不引入新接口的前提下，实现个性化行为激活路径，深化情感连接。
+
+
+% ────────────────────────────────────────────────────────────
+\section{应用前景}
+% ────────────────────────────────────────────────────────────
+
+\subsection*{市场规模}
+
+主目标市场：中国 9500 万抑郁症患者，按 1\% 付费转化率对应 95 万付费用户，年均 68 元订阅，年收入潜力超过 \kw{6400 万元}。次目标市场：超过 1 亿"城市宅家青年"为产品提供广泛自然增长土壤，两者构成巨大蓝海市场。
+
+\subsection*{商业化路径}
+
+基础功能完全免费（降低抑郁人群使用门槛为首要责任），通过\textbf{植物物种解锁}（兰花、仙人掌、银杏等）、\textbf{心情态皮肤付费}、\textbf{家人陪伴模式订阅}三条路径实现商业变现。
+
+\subsection*{社会价值与平台契合度}
+
+产品将临床抗抑郁干预手段以零门槛方式嵌入日常生活，有望成为心理健康从"治疗端"向"日常预防端"延伸的重要工具。深度绑定 CoreML、Apple Watch、Live Activity 等苹果独有能力，形成强平台壁垒，契合苹果在心理健康与隐私保护方向的战略布局。与往届获奖作品《SlowMo》《Whisper》同属"低压力·行为转化"赛道，具备较高评审认可度与专项社会责任奖获奖潜力。
+
+\end{document}
