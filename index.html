@@ -1,0 +1,1478 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>光合作用 - 可交互原型 v3</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    /* ===== 展示台：深色背景，纯色底色背景.png 不用于展示台 ===== */
+    body {
+        min-height: 100vh;
+        background: #0a1a0e;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        padding: 40px 20px;
+        font-family: 'PingFang SC', 'Noto Sans SC', -apple-system, sans-serif;
+    }
+
+    .stage-header { text-align: center; margin-bottom: 24px; color: rgba(255,255,255,0.85); }
+    .stage-header h1 { font-size: 20px; font-weight: 700; letter-spacing: 2px; }
+    .stage-header p { font-size: 13px; color: rgba(255,255,255,0.4); margin-top: 4px; }
+
+    /* ===== 手机外框 430×932 ===== */
+    .phone {
+        width: 430px; height: 932px;
+        background: #0a1a0e;
+        border-radius: 54px; overflow: hidden;
+        position: relative; flex-shrink: 0;
+        box-shadow: 0 0 0 2px #3a3a3a, 0 0 0 5px #111, 0 40px 100px rgba(0,0,0,0.8);
+    }
+    .notch {
+        position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
+        width: 14px; height: 14px; background: #000; border-radius: 50%; z-index: 200;
+    }
+    .screen-stack { position: absolute; inset: 0; overflow: hidden; }
+
+    /* 每个屏幕默认隐藏，.active 时可见 */
+    .screen {
+        position: absolute; inset: 0;
+        display: flex; flex-direction: column;
+        opacity: 0; transform: translateX(36px);
+        pointer-events: none;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+        overflow: hidden;
+    }
+    .screen.active { opacity: 1; transform: translateX(0); pointer-events: auto; }
+    .screen.exit-left { transform: translateX(-28px); opacity: 0; pointer-events: none; }
+
+    /* 通用状态栏 */
+    .status-bar {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 18px 30px 8px; font-size: 14px; font-weight: 600;
+        flex-shrink: 0; position: relative; z-index: 10; color: #fff;
+    }
+    .status-icons { display: flex; align-items: center; gap: 6px; }
+
+    /* 底部手势条 */
+    .gesture-bar {
+        position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+        width: 140px; height: 5px; border-radius: 3px; z-index: 100;
+        background: rgba(255,255,255,0.25);
+    }
+    .gesture-bar.dark { background: rgba(0,0,0,0.18); }
+
+    .tap { cursor: pointer; transition: transform 0.15s, opacity 0.15s; }
+    .tap:active { transform: scale(0.94); opacity: 0.75; }
+    .hint { margin-top: 20px; font-size: 13px; color: rgba(255,255,255,0.4); text-align: center; }
+
+    /* ============================================================
+       屏幕1：启动页
+    ============================================================ */
+    #screen-splash { background: #060e08; cursor: pointer; }
+    .splash-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .splash-content {
+        position: relative; z-index: 10; flex: 1;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center; gap: 20px;
+    }
+    .splash-icon { width: 96px; height: 96px; }
+    .splash-title { font-size: 24px; font-weight: 800; color: #000 !important; letter-spacing: 2px; }
+    .splash-sub { font-size: 14px; color: #074066 !important; text-align: center; line-height: 1.8; padding: 0 44px; }
+    .splash-tap-hint {
+        position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%);
+        font-size: 13px; color: rgba(7,64,102,0.6) !important; white-space: nowrap;
+        animation: breathe 2.2s ease-in-out infinite;
+    }
+    @keyframes breathe { 0%,100%{opacity:0.35} 50%{opacity:0.85} }
+
+    /* ============================================================
+       屏幕2：选择植物
+    ============================================================ */
+    /* ============================================================
+       屏幕2：选择植物 — 黄色背景横向轮播卡片
+    ============================================================ */
+    #screen-choose { background: linear-gradient(180deg, #FFD900 0%, #FEFADE 100%); }
+
+    /* 顶部标题区 */
+    .choose-hd { padding: 20px 26px 0; position: relative; z-index: 10; }
+    .choose-h1-light { font-size: 34px; font-weight: 400; color: #1a1a1a; line-height: 1.15; }
+    .choose-h1-bold  { font-size: 34px; font-weight: 800; color: #1a1a1a; line-height: 1.15; }
+
+    /* 斜体引言：按设计稿水平居中，Y212 */
+    .choose-quote {
+        position: absolute; top: 212px; left: 0; right: 0;
+        z-index: 10;
+        font-size: 14px; font-style: italic; font-weight: 600;
+        color: #2a6010; line-height: 1.75;
+        text-align: center;
+        pointer-events: none;
+    }
+
+    /* 轮播外层：padding-top 给引言留出空间（引言底部约 212+50=262px） */
+    .choose-carousel-outer {
+        flex: 1; display: flex; flex-direction: column;
+        justify-content: center; overflow: hidden; position: relative;
+        padding-top: 80px;
+    }
+    /* 轨道：flex 横向排列，transform 平移实现切换 */
+    .choose-carousel-track {
+        display: flex; gap: 16px;
+        transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1);
+        will-change: transform;
+        padding: 12px 0 20px; /* 上下给阴影留空间 */
+    }
+
+    /* 单张卡片 */
+    .choose-card {
+        width: 300px; flex-shrink: 0;
+        background: #fff; border-radius: 28px;
+        box-shadow: 0 16px 48px rgba(0,0,0,0.18);
+        overflow: hidden; cursor: pointer;
+        transition: transform 0.38s ease, opacity 0.38s ease;
+    }
+    /* 中间激活卡片：正视，z-index最高，遮住两侧 */
+    .choose-card.active     { transform: scale(1) rotate(0deg);   opacity: 1;    z-index: 3; position: relative; }
+    /* 左侧卡片：缩小至0.8倍 + 顺时针倾斜，z-index低 */
+    .choose-card.side-left  { transform: scale(0.80) rotate(10deg);  opacity: 0.72; z-index: 1; position: relative; transform-origin: right center; }
+    /* 右侧卡片：缩小至0.8倍 + 逆时针倾斜，z-index低 */
+    .choose-card.side-right { transform: scale(0.80) rotate(-10deg); opacity: 0.72; z-index: 1; position: relative; transform-origin: left center; }
+    /* 兼容旧 .side 类 */
+    .choose-card.side { transform: scale(0.80); opacity: 0.72; z-index: 1; position: relative; }
+
+    .choose-card-img {
+        /* 图片四周留出边距，形成设计稿中"图片悬浮在卡片内"的效果 */
+        width: calc(100% - 24px); height: 220px; object-fit: cover;
+        display: block; border-radius: 16px;
+        margin: 12px 12px 0;
+    }
+    .choose-card-body {
+        padding: 16px 20px 22px;
+        display: flex; flex-direction: column; align-items: center; gap: 7px;
+    }
+    .choose-card-name {
+        font-size: 26px; font-weight: 700; color: #1a1a1a; letter-spacing: -0.5px;
+    }
+    .choose-card-desc {
+        font-size: 13px; color: #999; line-height: 1.55; text-align: center;
+    }
+    /* CTA 按钮：黑色胶囊 + 绿色圆形箭头 */
+    .choose-card-cta {
+        margin-top: 6px; width: 100%;
+        background: #1a1a1a; border-radius: 50px;
+        padding: 15px 22px;
+        display: flex; align-items: center; justify-content: center; gap: 10px;
+        font-size: 15px; font-weight: 700; color: #fff;
+        cursor: pointer; transition: transform 0.15s, background 0.15s;
+    }
+    .choose-card-cta:active { transform: scale(0.97); background: #333; }
+    .choose-cta-icon {
+        width: 26px; height: 26px; border-radius: 50%;
+        background: #4CAF50; display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+    }
+
+    /* 分页小圆点 */
+    .choose-dots {
+        display: flex; align-items: center; justify-content: center;
+        gap: 8px; padding: 0 0 28px; flex-shrink: 0;
+    }
+    .choose-dot {
+        height: 8px; border-radius: 4px;
+        background: rgba(0,0,0,0.22);
+        transition: all 0.3s ease; cursor: pointer;
+    }
+    .choose-dot.active     { width: 24px; background: #1a1a1a; }
+    .choose-dot:not(.active) { width: 8px; }
+
+    /* ============================================================
+       屏幕3：主页面
+
+       布局分区（从上到下）：
+       [状态栏 50px]
+       [独白气泡 ~85px]
+       [弹性空间 → 植物图占满]
+       [植物信息区 ~110px，absolute定位于Tab上方]
+       [Tab栏 74px]
+
+       修复1：纯色底色背景.png 作为底色防止PNG透明穿帮
+       修复2：数据面板 bottom:0 + translateY(110%) 完全隐藏
+       修复3：Tab栏只保留「主页」「我的」两项
+    ============================================================ */
+    #screen-home { background: #87CEEC; /* 纯天空蓝兜底，防棋盘格 */ }
+
+    /* 天空兜底层：用 #7dd8ee 精确匹配向日葵PNG天空区域颜色，消除棋盘格 */
+    .home-sky {
+        position: absolute; inset: 0; z-index: 0; pointer-events: none;
+        background: linear-gradient(180deg, #7dd8ee 0%, #9ee0d0 40%, #6ab84a 100%);
+    }
+    .home-bg {
+        position: absolute; inset: 0;
+        width: 100%; height: 100%; object-fit: cover; object-position: 48% 45%;
+        z-index: 1;
+        background: #87CEEC;
+    }
+    @keyframes plant-breeze {
+        0%   { transform: scale(1)     rotate(0deg); }
+        20%  { transform: scale(1.006) rotate(0.25deg); }
+        40%  { transform: scale(1.012) rotate(0deg); }
+        60%  { transform: scale(1.006) rotate(-0.25deg); }
+        80%  { transform: scale(1.002) rotate(-0.1deg); }
+        100% { transform: scale(1)     rotate(0deg); }
+    }
+    .home-clouds {
+        position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden;
+    }
+    .cloud {
+        position: absolute; background: rgba(255, 255, 255, 0.85);
+        border-radius: 50%; filter: blur(8px); animation: cloud-drift linear infinite;
+    }
+    .cloud-1 { width: 120px; height: 40px; top: 80px; left: -150px; animation-duration: 45s; }
+    .cloud-2 { width: 90px; height: 30px; top: 140px; left: -120px; animation-duration: 60s; animation-delay: -20s; opacity: 0.7; }
+    .cloud-3 { width: 150px; height: 50px; top: 60px; left: -180px; animation-duration: 55s; animation-delay: -35s; opacity: 0.6; }
+    @keyframes cloud-drift {
+        0%   { transform: translateX(0); }
+        100% { transform: translateX(600px); }
+    }
+    .home-butterflies { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+    .butterfly { position: absolute; width: 24px; height: 24px; animation: butterfly-fly 20s ease-in-out infinite; }
+    .butterfly-wing { position: absolute; width: 10px; height: 14px; background: linear-gradient(135deg, #FFB6C1, #FF69B4); border-radius: 50% 50% 50% 0; animation: wing-flutter 0.3s ease-in-out infinite; }
+    .butterfly-wing.left { left: 2px; top: 5px; transform-origin: right center; }
+    .butterfly-wing.right { right: 2px; top: 5px; transform-origin: left center; animation: wing-flutter-right 0.3s ease-in-out infinite; }
+    @keyframes wing-flutter { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(0.3); } }
+    @keyframes wing-flutter-right { 0%, 100% { transform: scaleX(-1); } 50% { transform: scaleX(-0.3); } }
+    .butterfly-1 { top: 200px; left: 50px; animation-delay: 0s; }
+    .butterfly-2 { top: 280px; left: 300px; animation-delay: -8s; animation-duration: 25s; }
+    @keyframes butterfly-fly { 0% { transform: translate(0,0) rotate(0deg); } 25% { transform: translate(80px,-40px) rotate(10deg); } 50% { transform: translate(150px,20px) rotate(-5deg); } 75% { transform: translate(60px,60px) rotate(8deg); } 100% { transform: translate(0,0) rotate(0deg); } }
+
+    /* ===== 主页顶部标题行：白色毛玻璃衬底，确保标题在天空背景上始终可见 ===== */
+    .home-header-row {
+        position: relative; z-index: 15; flex-shrink: 0;
+        display: flex; align-items: flex-start; justify-content: space-between;
+        /* 与选择页 choose-hd 完全一致：padding: 20px 26px 0，X/Y坐标对齐 */
+        padding: 20px 26px 0;
+    }
+    .home-plant-title-top { display: flex; flex-direction: column; line-height: 1.15; }
+    /* 与选择页 choose-h1-bold 相同字体栈，视觉一致 */
+    .home-plant-en {
+        font-family: 'PingFang SC', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+        font-size: 34px; font-weight: 800; letter-spacing: 0; line-height: 1.15;
+        color: #0c3318;
+    }
+    .home-plant-state-en {
+        font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
+        font-size: 11px; font-weight: 700; letter-spacing: 5px;
+        color: #1a4a22; text-transform: uppercase; margin-top: 1px;
+    }
+    /* 右上角「我的」快捷按钮 */
+    .home-profile-shortcut {
+        width: 40px; height: 40px; border-radius: 50%;
+        background: rgba(255,255,255,0.4);
+        border: 1.5px solid rgba(255,255,255,0.8);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; flex-shrink: 0;
+        transition: background 0.15s, transform 0.15s;
+    }
+    .home-profile-shortcut:active { background: rgba(255,255,255,0.65); transform: scale(0.9); }
+    .home-profile-shortcut img { width: 22px; height: 22px; }
+
+    /* 独白对话框：SVG原始尺寸311×123，对话框内容区域248×44 */
+    .home-monologue {
+        position: absolute;
+        top: 280px; left: 111px;
+        z-index: 15;
+        width: 311px; height: 123px;
+    }
+    .monologue-svg {
+        width: 311px; height: 123px; display: block;
+    }
+    .monologue-text {
+        position: absolute;
+        top: 27px; left: 34px;
+        width: 248px; height: 44px;
+        display: flex; align-items: center; justify-content: center;
+        padding: 0 12px;
+        font-size: 15px; color: #074066; font-weight: 600;
+        line-height: 17px; text-align: center;
+        pointer-events: none;
+    }
+
+    /* 植物信息：bottom = Tab栏实际高度(padding:10+30+图标24+字10=74px) + 间距18px = 92px */
+    .home-plant-info {
+        position: absolute;
+        bottom: 96px; left: 18px;
+        z-index: 15;
+        background: rgba(4,14,8,0.80);
+        border: 1px solid rgba(255,255,255,0.22);
+        border-radius: 18px;
+        padding: 10px 20px 12px;
+    }
+    .plant-name-big {
+        font-size: 32px; font-weight: 900; color: #fff; line-height: 1.1;
+        white-space: nowrap;
+    }
+    .photosyn-row {
+        display: flex; align-items: baseline; gap: 4px; margin-top: 4px;
+        white-space: nowrap;
+    }
+    .photosyn-label { font-size: 11px; color: rgba(255,255,255,0.5); }
+    .photosyn-num { font-size: 24px; font-weight: 800; color: #7DD4A8; }
+    .photosyn-unit { font-size: 11px; color: rgba(255,255,255,0.45); }
+
+    /* ===================================================
+       径向圆盘 FAB 系统
+
+       结构：
+         .fab-container (64×64, 定位锚点)
+           ├── .fab-disc (200×200 大圆盘, 以FAB中心为scale原点展开)
+           │     ├── .fab-spoke-btn × 2 (辐射子按钮)
+           │     └── .fab-spoke-label × 2
+           └── img.fab-main-btn (主按钮, z-index 在disc之上)
+
+       子按钮坐标（disc内部，disc尺寸200×200，中心=100,100）
+         拍摄  ← 左侧 9点方向：  left:8px,  top:78px (radius=70, angle=180°)
+         图库  ↑ 正上 12点方向： left:78px, top:8px  (radius=70, angle=270°)
+    =================================================== */
+    /* FAB锚点：96×96px，右下角 right:18px bottom:48px */
+    .fab-container {
+        position: absolute; bottom: 48px; right: 18px;
+        width: 96px; height: 96px; z-index: 20;
+    }
+
+    /* 大圆盘：以FAB中心为 transform-origin 从0缩放到1 */
+    .fab-disc {
+        position: absolute;
+        width: 287px; height: 287px; border-radius: 50%;
+        background: rgba(6, 15, 10, 0.77);
+        backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px);
+        border: 1px solid rgba(255,255,255,0.14);
+        box-shadow: 0 24px 64px rgba(0,0,0,0.65);
+        /* 圆盘左上角偏移 = -(287-96)/2 = -95.5px，使圆盘中心与96px FAB中心重合 */
+        top: -96px; left: -96px;
+        /* scale原点 = FAB中心在disc坐标系中的位置(143px, 143px) */
+        transform-origin: 143px 143px;
+        transform: scale(0); opacity: 0; pointer-events: none;
+        transition: transform 0.36s cubic-bezier(0.34, 1.42, 0.64, 1),
+                    opacity 0.22s ease;
+    }
+    .fab-container.expanded .fab-disc {
+        transform: scale(1); opacity: 1; pointer-events: auto;
+    }
+    /* 展开态：主按钮旋转45°，不切换图片资源 */
+    .fab-container.expanded .fab-main-btn {
+        transform: rotate(45deg);
+    }
+
+    /* 子按钮通用 */
+    .fab-spoke-btn {
+        position: absolute; width: 44px; height: 44px; border-radius: 50%;
+        background: rgba(255,255,255,0.11);
+        border: 1.5px solid rgba(255,255,255,0.22);
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer;
+        transition: background 0.15s, transform 0.15s;
+    }
+    .fab-spoke-btn:active { background: rgba(125,212,168,0.28); transform: scale(0.88); }
+    .fab-spoke-btn svg { width: 22px; height: 22px; }
+    .fab-spoke-btn img { width: 22px; height: 22px; filter: brightness(0) invert(1); }
+
+    /* 子按钮标签 */
+    .fab-spoke-label {
+        position: absolute; font-size: 10px; font-weight: 600;
+        color: rgba(255,255,255,0.6); white-space: nowrap; pointer-events: none;
+    }
+
+    /* 拍摄：左侧9点 — disc中心(143,143)，radius=100 → center(43,143)，button 44px */
+    .fab-spoke-camera { top: 121px; left: 21px; }
+    /* 标签在按钮正下方居中 */
+    .fab-label-camera { top: 173px; left: 21px; width: 44px; text-align: center; }
+
+    /* 图库：正上12点 — disc中心(143,143)，radius=100 → center(143,43)，button 44px */
+    .fab-spoke-archive { top: 21px; left: 121px; }
+    /* 标签在按钮正下方居中 */
+    .fab-label-archive { top: 73px; left: 121px; width: 44px; text-align: center; }
+
+    /* 主FAB图标，叠在圆盘上方，与容器同尺寸96×96 */
+    .fab-main-btn {
+        position: absolute; top: 0; left: 0;
+        width: 96px; height: 96px;
+        cursor: pointer; z-index: 2;
+        transition: transform 0.2s;
+    }
+    .fab-main-btn:active { transform: scale(0.88); }
+    .fab-container.expanded .fab-main-btn:active { transform: rotate(45deg) scale(0.88); }
+
+    /* 点击圆盘外侧区域关闭的遮罩（透明，z-index低于disc） */
+    .fab-backdrop {
+        position: fixed; inset: 0; z-index: 18;
+        display: none;
+    }
+    .fab-container.expanded ~ .fab-backdrop { display: block; }
+
+    /* 四要素数据面板：修复 bottom:0 + translateY(110%) 确保完全藏在屏幕外 */
+    .fab-data-panel {
+        position: absolute; bottom: 0; left: 0; right: 0;
+        background: rgba(6,16,9,0.94); backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border-top: 1px solid rgba(255,255,255,0.1);
+        padding: 20px 22px 96px; /* padding-bottom留出Tab栏高度 */
+        transform: translateY(110%); /* 110%确保连1px都不露出 */
+        transition: transform 0.38s cubic-bezier(0.32,0.72,0,1);
+        z-index: 25;
+    }
+    .fab-data-panel.show { transform: translateY(0); }
+
+    /* 数据面板关闭按钮 */
+    .fdp-header {
+        display: flex; align-items: center; justify-content: space-between;
+        margin-bottom: 14px;
+    }
+    .fdp-title { font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.6); }
+    .fdp-close {
+        width: 28px; height: 28px; border-radius: 50%;
+        background: rgba(255,255,255,0.1);
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; font-size: 14px; color: rgba(255,255,255,0.6);
+    }
+    .fdp-close:active { background: rgba(255,255,255,0.2); }
+    .fdp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .fdp-item {
+        background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 16px; padding: 12px 14px;
+    }
+    .fdp-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .fdp-name { font-size: 13px; color: rgba(255,255,255,0.55); }
+    .fdp-num { font-size: 22px; font-weight: 800; }
+    .fdp-bar { height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
+    .fdp-fill { height: 100%; border-radius: 2px; }
+    .fdp-light .fdp-num { color: #FFD97D; }
+    .fdp-light .fdp-fill { background: linear-gradient(90deg,#FFD97D,#FFC940); }
+    .fdp-water .fdp-num { color: #71D4F3; }
+    .fdp-water .fdp-fill { background: linear-gradient(90deg,#71D4F3,#4FC3F7); }
+    .fdp-air .fdp-num { color: #B8D4E0; }
+    .fdp-air .fdp-fill { background: linear-gradient(90deg,#B8D4E0,#90B8CC); }
+    .fdp-biome .fdp-num { color: #7DD4A8; }
+    .fdp-biome .fdp-fill { background: linear-gradient(90deg,#7DD4A8,#4CAF7A); }
+
+    /* 主页不使用底部Tab，入口在右上角「我的」按钮 */
+    .tab-bar-dark { display: none !important; }
+
+    /* ============================================================
+       屏幕4：拍摄页（结果以Sheet叠加，不跳新屏）
+    ============================================================ */
+    #screen-camera { background: #000; }
+    .camera-nav { display: flex; align-items: center; justify-content: space-between; padding: 14px 24px 8px; position: relative; z-index: 55; }
+    .cam-back { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: opacity 0.15s; }
+    .cam-back:active { opacity: 0.5; }
+    .cam-title { font-size: 17px; font-weight: 600; color: #fff; }
+    .cam-settings-btn { width: 40px; height: 40px; cursor: pointer; transition: opacity 0.15s; display: flex; align-items: center; justify-content: center; }
+    .cam-settings-btn:active { opacity: 0.5; }
+    .viewfinder { flex: 1; position: relative; background: transparent; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .camera-feed-bg { position: absolute; inset: 0; background: url('./assets/切图/ui页面导出/自然环境.png') center/cover no-repeat; opacity: 0; transition: opacity 0.6s ease; z-index: 0; pointer-events: none; }
+    .camera-opened .camera-feed-bg { opacity: 1; }
+    .scan-frame { position: absolute; inset: 52px; pointer-events: none; z-index: 5; }
+    .sc { position: absolute; width: 30px; height: 30px; border-color: rgba(255,255,255,0.85); border-style: solid; }
+    .sc-tl { top:0;left:0; border-width:3px 0 0 3px; border-radius:5px 0 0 0; }
+    .sc-tr { top:0;right:0; border-width:3px 3px 0 0; border-radius:0 5px 0 0; }
+    .sc-bl { bottom:0;left:0; border-width:0 0 3px 3px; border-radius:0 0 0 5px; }
+    .sc-br { bottom:0;right:0; border-width:0 3px 3px 0; border-radius:0 0 5px 0; }
+    .scan-line { position: absolute; left: 52px; right: 52px; height: 2px; background: linear-gradient(90deg, transparent, rgba(125,212,168,0.8), transparent); box-shadow: 0 0 12px rgba(125,212,168,0.6); z-index: 6; opacity: 0; pointer-events: none; }
+    .scan-line.scanning { opacity: 1; animation: scan-move 2s ease-in-out infinite; }
+    @keyframes scan-move { 0% { top: 52px; } 50% { top: calc(100% - 54px); } 100% { top: 52px; } }
+    .vf-hint { font-size: 15px; color: rgba(255,255,255,0.55); text-align: center; line-height: 2.2; pointer-events: none; z-index: 6; position: relative; transition: opacity 0.3s ease; }
+    .cam-analyzing-overlay { position: absolute; inset: 0; z-index: 45; background: rgba(3,10,5,0.92); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
+    .cam-analyzing-overlay.show { opacity: 1; pointer-events: auto; }
+    .analyzing-anim { width: 180px; height: 180px; }
+    .analyzing-title { font-size: 17px; font-weight: 600; color: rgba(255,255,255,0.82); }
+    .analyzing-sub { font-size: 13px; color: rgba(255,255,255,0.38); }
+    .elem-dots { display: flex; gap: 22px; }
+    .elem-dot { display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 11px; color: rgba(255,255,255,0.42); }
+    .elem-circle { width: 44px; height: 44px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 19px; animation: elem-pulse 1.6s ease-in-out infinite; }
+    .elem-dot:nth-child(1) .elem-circle { animation-delay: 0s; }
+    .elem-dot:nth-child(2) .elem-circle { animation-delay: 0.4s; }
+    .elem-dot:nth-child(3) .elem-circle { animation-delay: 0.8s; }
+    .elem-dot:nth-child(4) .elem-circle { animation-delay: 1.2s; }
+    @keyframes elem-pulse { 0%,100% { border-color:rgba(255,255,255,0.1); background:transparent; } 50% { border-color:rgba(125,212,168,0.85); background:rgba(125,212,168,0.12); } }
+    .cam-result-overlay { position: absolute; inset: 0; z-index: 48; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 100px 20px 160px; opacity: 0; pointer-events: none; transition: opacity 0.35s ease; }
+    .cam-result-overlay.show { opacity: 1; pointer-events: auto; }
+    .result-element-panel { background: rgba(255,255,255,0.18); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-radius: 24px; padding: 18px 22px; border: 1px solid rgba(255,255,255,0.22); box-shadow: 0 8px 32px rgba(0,0,0,0.2); width: 100%; max-width: 380px; }
+    .result-elem-row { display: flex; justify-content: space-around; align-items: flex-start; }
+    .result-elem-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .result-elem-score { font-size: 14px; font-weight: 700; color: rgba(255,255,255,0.9); }
+    .result-elem-icon { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; }
+    .result-elem-icon img { width: 100%; height: 100%; object-fit: contain; }
+    .result-elem-name { font-size: 11px; color: rgba(255,255,255,0.6); font-weight: 500; }
+    .result-elem-mult { font-size: 10px; color: rgba(255,255,255,0.4); }
+    .re-sun .result-elem-score { color: #FFD97D; }
+    .re-water .result-elem-score { color: #71D4F3; }
+    .re-sky .result-elem-score { color: #74B9FF; }
+    .re-nature .result-elem-score { color: #7DD4A8; }
+    .result-energy-display { position: absolute; top: 580px; left: 50%; transform: translateX(-50%); text-align: center; }
+    .result-energy-display img { width: 160px; height: auto; display: block; }
+    .cam-controls { height: 144px; background: #000; display: flex; align-items: center; justify-content: space-between; padding: 0 44px; position: relative; z-index: 50; }
+    .cam-ctrl-btn { width: 46px; height: 46px; cursor: pointer; transition: opacity 0.15s; }
+    .cam-ctrl-btn:active { opacity: 0.5; }
+    .cam-shutter { width: 82px; height: 82px; cursor: pointer; transition: transform 0.15s; }
+    .cam-shutter:active { transform: scale(0.88); }
+    .cam-result-mask { display: none !important; }
+    .cam-result-sheet { display: none !important; }
+    .vf-score-bar { display: none !important; }
+    .cam-initial-overlay { display: none !important; }
+    .progress-backdrop-gradient {
+        position: absolute; bottom: 0; left: 0; right: 0;
+        height: 200px;
+        background: url('./assets/切图/黑色渐变背景.svg') bottom center/cover no-repeat;
+        z-index: 20; display: none; pointer-events: none;
+        opacity: 0; transition: opacity 0.4s ease;
+    }
+    .progress-backdrop-gradient.show { display: block; opacity: 1; }
+
+    /* ============================================================
+       屏幕5：图库 / Light Archive
+    ============================================================ */
+    #screen-archive { background: #87CEEB; overflow-y: auto; }
+    #screen-archive::-webkit-scrollbar { display: none; }
+    .archive-hd { background: transparent; padding: 14px 22px 6px; flex-shrink: 0; }
+    .archive-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+    .arch-back { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: opacity 0.15s; }
+    .arch-back:active { opacity: 0.5; }
+    .archive-filter-btn { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .archive-title { font-size: 28px; font-weight: 800; color: #1a1a1a; }
+    .archive-date-nav { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(0,0,0,0.12); }
+    .archive-date-nav span.archive-date-text { font-size: 14px; font-weight: 600; color: rgba(0,0,0,0.7); }
+    .archive-date-nav .date-arrows { display: flex; gap: 8px; }
+    .cal-day-header { font-size: 11px; font-weight: 700; color: rgba(0,0,0,0.4); text-align: center; padding: 4px 0; }
+    .cal-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; position: relative; cursor: pointer; transition: transform 0.15s ease; }
+    .cal-cell:active { transform: scale(0.95); }
+    .cal-cell.empty { background: transparent; cursor: default; }
+    .cal-cell.empty:active { transform: none; }
+    .cal-cell.has-leaf { background: url('./assets/切图/日历-有记录-未选中态.svg') center/cover no-repeat; color: transparent; }
+    .cal-cell.has-leaf.selected { background: url('./assets/切图/日历-选中态.svg') center/cover no-repeat; }
+    .cal-cell.has-leaf.today { background: url('./assets/切图/日历-选中态.svg') center/cover no-repeat; }
+    .archive-photo-card { margin: 0 22px 16px; border-radius: 12px; overflow: hidden; position: relative; background: rgba(0,0,0,0.1); }
+    .archive-photo-card img { width: 100%; height: auto; display: block; }
+    .archive-photo-score { position: absolute; top: 12px; left: 12px; display: flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border-radius: 20px; padding: 6px 12px; }
+    .archive-photo-score .score-icon { font-size: 16px; }
+    .archive-photo-score .score-val { font-size: 20px; font-weight: 800; color: #fff; }
+    .archive-element-bars { padding: 0 22px 40px; }
+    .archive-element-bars img { width: 100%; height: auto; display: block; }
+
+    /* ============================================================
+       屏幕6：我的（修复：使用设计稿素材）
+    ============================================================ */
+    #screen-profile { background: #b8e8f8; overflow-y: auto; }
+    #screen-profile::-webkit-scrollbar { display: none; }
+    .profile-page { padding: 0 0 40px; }
+    .profile-nav { display: flex; align-items: center; justify-content: space-between; padding: 14px 22px 10px; }
+    .profile-back { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .profile-avatar-btn { width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.3); border: 2px solid rgba(255,255,255,0.6); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .profile-section-title { font-size: 20px; font-weight: 800; color: #1a1a1a; padding: 0 20px; margin-bottom: 12px; }
+    .my-plants-row { display: flex; gap: 16px; padding: 0 20px; margin-bottom: 20px; overflow-x: auto; }
+    .my-plants-row::-webkit-scrollbar { display: none; }
+    .profile-archive-cal { margin: 0 16px 20px; border-radius: 20px; background: rgba(255,255,255,0.4); padding: 14px 16px; }
+    .pac-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+    .pac-cell { aspect-ratio: 1; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; background: rgba(255,255,255,0.5); color: rgba(0,0,0,0.5); position: relative; }
+    .pac-cell.empty { background: rgba(220,220,220,0.4); }
+    .pac-cell.has-leaf { background: url('./assets/切图/日历-有记录-未选中态.svg') center/cover no-repeat; color: #3F6262; font-weight: 700; }
+    .pac-cell.has-leaf.today { background: url('./assets/切图/日历-选中态.svg') center/cover no-repeat; }
+    .pac-cell .leaf-icon { font-size: 12px; position: absolute; top: 2px; right: 2px; }
+    .weekly-elements { margin: 0 16px; border-radius: 20px; background: rgba(255,255,255,0.4); padding: 16px; }
+    .we-row { display: flex; align-items: center; gap: 16px; }
+    .we-radar { width: 100px; height: 100px; flex-shrink: 0; position: relative; }
+    .we-radar svg { width: 100%; height: 100%; }
+    .we-list { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+    .we-item { display: flex; align-items: center; gap: 8px; }
+    .we-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .we-item-name { font-size: 14px; color: rgba(0,0,0,0.7); flex: 1; }
+    .we-item-val { font-size: 14px; font-weight: 700; color: rgba(0,0,0,0.8); }
+    .we-item-bar { width: 100px; height: 6px; border-radius: 3px; background: rgba(0,0,0,0.08); overflow: hidden; }
+    .we-item-fill { height: 100%; border-radius: 3px; }
+    .tab-bar-light { position: absolute; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-around; padding: 10px 0 30px; background: #fff; border-top: 0.5px solid #ebebeb; z-index: 20; }
+    .tab-l { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10px; color: #aaa; cursor: pointer; padding: 4px 28px; transition: all 0.2s; }
+    .tab-l.active { color: #2d6e3e; }
+    .tab-l svg { width: 24px; height: 24px; }
+    .tab-l:active { transform: scale(0.9); }
+</style>
+</head>
+<body>
+
+<div class="stage-header">
+    <h1>🌱 Photosynthesis</h1>
+    <p>Mental Health · Behavior Activation App — Interactive Prototype v3 · 430×932</p>
+</div>
+
+<div class="phone">
+    <div class="notch"></div>
+    <div class="screen-stack">
+
+        <!-- ==================== 屏幕1：启动页 ==================== -->
+        <section class="screen active" data-screen="splash" id="screen-splash" onclick="go('choose')">
+            <img class="splash-bg" src="./assets/切图/启动页-背景.png" alt="">
+            <div class="splash-content">
+                <img class="splash-icon" src="./assets/切图/启动页-icon.svg" alt="光合作用">
+                <div class="splash-title" style="font-size:24px;letter-spacing:1px;">Photosynthesis</div>
+                <div class="splash-sub">Grow every bit of nature you see<br>into your plant companion.</div>
+            </div>
+            <div class="splash-tap-hint">Tap to Start</div>
+            <div class="gesture-bar"></div>
+        </section>
+
+        <!-- ==================== 屏幕2：选择植物 ==================== -->
+        <section class="screen" data-screen="choose" id="screen-choose">
+            <div class="status-bar" style="color:#1a1a1a;">
+                <span>9:41</span>
+                <div class="status-icons">
+                    <svg width="17" height="12" viewBox="0 0 17 12" fill="#1a1a1a"><rect x="0" y="5" width="3" height="7" rx="0.5"/><rect x="4.5" y="3" width="3" height="9" rx="0.5"/><rect x="9" y="1" width="3" height="11" rx="0.5"/><rect x="13.5" y="0" width="3" height="12" rx="0.5" opacity="0.3"/></svg>
+                    <svg width="26" height="13" viewBox="0 0 26 13" fill="none"><rect x="0.5" y="0.5" width="22" height="12" rx="3.5" stroke="#1a1a1a" stroke-opacity="0.5"/><rect x="1.5" y="1.5" width="17" height="10" rx="2.5" fill="#1a1a1a"/><path d="M24 4.5v4a2 2 0 000-4z" fill="#1a1a1a" fill-opacity="0.4"/></svg>
+                </div>
+            </div>
+            <!-- 左上角标题：两行，第一行细、第二行粗 -->
+            <div class="choose-hd">
+                <div class="choose-h1-light">Choose</div>
+                <div class="choose-h1-bold">Your Plant</div>
+            </div>
+            <!-- 斜体引言 -->
+            <div class="choose-quote">
+                Every time you walk toward the light,<br>
+                I grow a little taller than yesterday.
+            </div>
+            <!-- 横向轮播区域 -->
+            <div class="choose-carousel-outer" id="choose-carousel-outer">
+                <div class="choose-carousel-track" id="choose-track">
+                    <!-- 卡片1：仙人掌（循环用） -->
+                    <div class="choose-card side-left" data-idx="0">
+                        <img class="choose-card-img" src="./assets/切图/仙人掌.png" alt="cactus">
+                        <div class="choose-card-body">
+                            <div class="choose-card-name">cactus</div>
+                            <div class="choose-card-desc">Needs little. Built for those with irregular routines or indoor life.</div>
+                            <div class="choose-card-cta" onclick="go('home')">
+                                <div class="choose-cta-icon">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                                </div>
+                                Choose this partner
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 卡片2：向日葵（默认选中） -->
+                    <div class="choose-card active" data-idx="1">
+                        <img class="choose-card-img" src="./assets/切图/选择植物页-向日葵卡片.png" alt="向日葵">
+                        <div class="choose-card-body">
+                            <div class="choose-card-name">sunflower</div>
+                            <div class="choose-card-desc">Perfect for beginners or anyone looking for an easy-to-care-for plant</div>
+                            <div class="choose-card-cta" onclick="go('home')">
+                                <div class="choose-cta-icon">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                                </div>
+                                Choose this partner
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 卡片3：松树 -->
+                    <div class="choose-card side-right" data-idx="2">
+                        <img class="choose-card-img" src="./assets/切图/松树.png" alt="pine tree">
+                        <div class="choose-card-body">
+                            <div class="choose-card-name">pine tree</div>
+                            <div class="choose-card-desc">Tough wind and pressure. Perfect if you need stability and resilience.</div>
+                            <div class="choose-card-cta" onclick="go('home')">
+                                <div class="choose-cta-icon">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                                </div>
+                                Choose this partner
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 卡片4：仙人掌（循环用） -->
+                    <div class="choose-card side" data-idx="3">
+                        <img class="choose-card-img" src="./assets/切图/仙人掌.png" alt="cactus">
+                        <div class="choose-card-body">
+                            <div class="choose-card-name">cactus</div>
+                            <div class="choose-card-desc">Needs little. Built for those with irregular routines or indoor life.</div>
+                            <div class="choose-card-cta" onclick="go('home')">
+                                <div class="choose-cta-icon">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                                </div>
+                                Choose this partner
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 卡片5：向日葵（循环用） -->
+                    <div class="choose-card side" data-idx="4">
+                        <img class="choose-card-img" src="./assets/切图/选择植物页-向日葵卡片.png" alt="向日葵">
+                        <div class="choose-card-body">
+                            <div class="choose-card-name">sunflower</div>
+                            <div class="choose-card-desc">Perfect for beginners or anyone looking for an easy-to-care-for plant</div>
+                            <div class="choose-card-cta" onclick="go('home')">
+                                <div class="choose-cta-icon">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                                </div>
+                                Choose this partner
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- 分页小圆点 -->
+            <div class="choose-dots" id="choose-dots">
+                <div class="choose-dot active" onclick="carouselGo(0)"></div>
+                <div class="choose-dot" onclick="carouselGo(1)"></div>
+                <div class="choose-dot" onclick="carouselGo(2)"></div>
+            </div>
+            <div class="gesture-bar dark"></div>
+        </section>
+
+        <!-- ==================== 屏幕3：主页面 ==================== -->
+        <section class="screen" data-screen="home" id="screen-home">
+            <!-- 天空渐变兜底层（z-index:0），防止PNG透明区域出现棋盘格 -->
+            <div class="home-sky"></div>
+            <div class="home-clouds">
+                <div class="cloud cloud-1"></div>
+                <div class="cloud cloud-2"></div>
+                <div class="cloud cloud-3"></div>
+            </div>
+            <div class="home-butterflies">
+                <div class="butterfly butterfly-1">
+                    <div class="butterfly-wing left"></div>
+                    <div class="butterfly-wing right"></div>
+                </div>
+                <div class="butterfly butterfly-2">
+                    <div class="butterfly-wing left"></div>
+                    <div class="butterfly-wing right"></div>
+                </div>
+            </div>
+            <!-- 植物背景图（z-index:1，叠在天空层上） -->
+            <video class="home-bg" id="home-video" autoplay loop muted playsinline src="./assets/视频/幼苗-缓动.mp4"></video>
+
+            <!-- 状态栏 -->
+            <div class="status-bar">
+                <span>9:41</span>
+                <div class="status-icons">
+                    <svg width="17" height="12" viewBox="0 0 17 12" fill="white"><rect x="0" y="5" width="3" height="7" rx="0.5"/><rect x="4.5" y="3" width="3" height="9" rx="0.5"/><rect x="9" y="1" width="3" height="11" rx="0.5"/></svg>
+                    <svg width="26" height="13" viewBox="0 0 26 13" fill="none"><rect x="0.5" y="0.5" width="22" height="12" rx="3.5" stroke="white" stroke-opacity="0.35"/><rect x="1.5" y="1.5" width="17" height="10" rx="2.5" fill="white"/><path d="M24 4.5v4a2 2 0 000-4z" fill="white" fill-opacity="0.4"/></svg>
+                </div>
+            </div>
+
+            <!-- 顶部标题行（absolute定位，z-index:15，不被背景图遮挡） -->
+            <div class="home-header-row">
+                <div class="home-plant-title-top">
+                    <div class="home-plant-en">Sunflower</div>
+                    <div class="home-plant-state-en">Radiant</div>
+                </div>
+                <div class="home-profile-shortcut tap" onclick="go('profile')">
+                    <img src="./assets/切图/我的-icon.svg" alt="我的">
+                </div>
+            </div>
+
+            <!-- 植物独白对话框：光档案展示时消失，自适应svg背景+居中文字 -->
+            <div class="home-monologue" id="home-monologue">
+                <img class="monologue-svg" src="./assets/切图/对话框.svg" alt="">
+                <div class="monologue-text">Every bit of sunlight this week — I received it all ✨</div>
+            </div>
+
+            <!-- 植物信息卡片已隐藏（设计稿无此元素） -->
+
+            <!-- 进度条：光档案点击后弹出，x=318 y=249, 80×545 -->
+            <img id="home-progress-bar"
+                src="./assets/切图/进度条.svg" alt="progress"
+                style="position:absolute; left:318px; top:249px; z-index:22;
+                       width:80px; height:545px; display:none; pointer-events:none;
+                       opacity:0; transform:translateY(20px);
+                       transition:opacity 0.3s ease, transform 0.3s ease;">
+
+            <!-- 进度条弹出时的透明遮罩（点击其他区域收起进度条） -->
+            <div id="progress-backdrop" style="position:absolute;inset:0;z-index:21;display:none;cursor:pointer;" onclick="hideProgressBar()"></div>
+            <img class="progress-backdrop-gradient" id="progress-gradient-overlay" src="./assets/切图/黑色渐变背景.svg" alt="" style="position:absolute;bottom:0;left:0;width:430px;height:200px;z-index:20;pointer-events:none;opacity:0;transition:opacity 0.4s ease;">
+
+            <!-- 径向圆盘 FAB -->
+            <div class="fab-container" id="fab-container">
+                <!-- 大圆盘（展开后从FAB中心向四周膨胀） -->
+                <div class="fab-disc" id="fab-disc">
+                    <!-- 左侧辐射按钮：拍摄 -->
+                    <div class="fab-spoke-btn fab-spoke-camera tap"
+                        onclick="event.stopPropagation(); collapseFab(); go('camera')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M23 7l-7 5 7 5V7z"/>
+                            <rect x="1" y="5" width="15" height="14" rx="2"/>
+                        </svg>
+                    </div>
+                    <span class="fab-spoke-label fab-label-camera">Camera</span>
+
+                    <!-- 正上辐射按钮：光档案 — 点击后收起圆盘并在主页展示进度条 -->
+                    <div class="fab-spoke-btn fab-spoke-archive tap"
+                        onclick="event.stopPropagation(); collapseFab(); showProgressBar()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                            <path d="M3 9h18M9 21V9"/>
+                        </svg>
+                    </div>
+                    <span class="fab-spoke-label fab-label-archive">Archive</span>
+                </div>
+
+                <!-- 主FAB按钮（始终可见，z-index在disc上方；进度条展示时切换为收纳态） -->
+                <img class="fab-main-btn" id="fab-main-img"
+                    src="./assets/切图/右下角-悬浮icon-收起状态.svg"
+                    alt="menu" onclick="event.stopPropagation(); toggleFab()">
+            </div>
+            <!-- 圆盘展开时的透明遮罩，点击任意位置收起 -->
+            <div class="fab-backdrop" id="fab-backdrop" onclick="collapseFab()"></div>
+
+            <!-- 四要素数据面板（修复：bottom:0 + translateY(110%)，初始完全隐藏） -->
+            <div class="fab-data-panel" id="fab-data-panel">
+                <div class="fdp-header">
+                    <div class="fdp-title">7-Day Element Rhythm</div>
+                    <div class="fdp-close" onclick="hideDataPanel()">✕</div>
+                </div>
+                <div class="fdp-grid">
+                    <div class="fdp-item fdp-light">
+                        <div class="fdp-row"><span class="fdp-name">☀️ Light</span><span class="fdp-num">3</span></div>
+                        <div class="fdp-bar"><div class="fdp-fill" style="width:100%"></div></div>
+                    </div>
+                    <div class="fdp-item fdp-water">
+                        <div class="fdp-row"><span class="fdp-name">💧 Water</span><span class="fdp-num">2</span></div>
+                        <div class="fdp-bar"><div class="fdp-fill" style="width:67%"></div></div>
+                    </div>
+                    <div class="fdp-item fdp-air">
+                        <div class="fdp-row"><span class="fdp-name">🌫️ Air</span><span class="fdp-num">2</span></div>
+                        <div class="fdp-bar"><div class="fdp-fill" style="width:67%"></div></div>
+                    </div>
+                    <div class="fdp-item fdp-biome">
+                        <div class="fdp-row"><span class="fdp-name">🌳 Biome</span><span class="fdp-num">3</span></div>
+                        <div class="fdp-bar"><div class="fdp-fill" style="width:100%"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="gesture-bar"></div>
+        </section>
+
+        <!-- ==================== 屏幕4：拍摄页 ==================== -->
+        <section class="screen" data-screen="camera" id="screen-camera">
+            <div class="camera-nav">
+                <div class="cam-back tap" data-back>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+                </div>
+                <span class="cam-title">Capture Nature</span>
+                <div class="cam-settings-btn tap">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                </div>
+            </div>
+            <div class="viewfinder">
+                <div class="camera-feed-bg"></div>
+                <div class="scan-frame">
+                    <div class="sc sc-tl"></div><div class="sc sc-tr"></div>
+                    <div class="sc sc-bl"></div><div class="sc sc-br"></div>
+                </div>
+                <div class="scan-line" id="scan-line"></div>
+                <div class="vf-hint" id="vf-hint">将镜头对准任意自然场景<br><span style="font-size:13px;opacity:0.38">Sun · Water · Sky · Nature</span></div>
+            </div>
+            <div class="cam-controls">
+                <img class="cam-ctrl-btn tap" src="./assets/切图/拍摄页-图库icon.svg" alt="图库" onclick="go('archive')">
+                <img class="cam-shutter tap" id="cam-shutter-btn" src="./assets/切图/拍摄icon-白色.svg" alt="capture" onclick="onShutter()">
+                <img class="cam-ctrl-btn tap" src="./assets/切图/拍摄页-旋转镜头icon.svg" alt="翻转">
+            </div>
+
+            <div class="cam-analyzing-overlay" id="cam-analyzing">
+                <img class="analyzing-anim" src="./assets/切图/拍摄页-识别中动画.svg" alt="识别中">
+                <div class="analyzing-title">AI Analyzing Elements</div>
+                <div class="analyzing-sub">Sun · Water · Sky · Nature...</div>
+                <div class="elem-dots">
+                    <div class="elem-dot"><div class="elem-circle">☀️</div><span>Sun</span></div>
+                    <div class="elem-dot"><div class="elem-circle">💧</div><span>Water</span></div>
+                    <div class="elem-dot"><div class="elem-circle">🌤️</div><span>Sky</span></div>
+                    <div class="elem-dot"><div class="elem-circle">🌳</div><span>Nature</span></div>
+                </div>
+            </div>
+
+            <div class="cam-result-overlay" id="cam-result-overlay">
+                <div class="result-element-panel">
+                    <div class="result-elem-row">
+                        <div class="result-elem-item re-sun">
+                            <div class="result-elem-score">3.2</div>
+                            <div class="result-elem-icon"><img src="./assets/切图/sun.svg" alt="Sun"></div>
+                            <div class="result-elem-name">Sun</div>
+                            <div class="result-elem-mult">x1.5</div>
+                        </div>
+                        <div class="result-elem-item re-water">
+                            <div class="result-elem-score">2.1</div>
+                            <div class="result-elem-icon"><img src="./assets/切图/water.svg" alt="Water"></div>
+                            <div class="result-elem-name">Water</div>
+                            <div class="result-elem-mult">x1.2</div>
+                        </div>
+                        <div class="result-elem-item re-sky">
+                            <div class="result-elem-score">2.8</div>
+                            <div class="result-elem-icon"><img src="./assets/切图/sky.svg" alt="Sky"></div>
+                            <div class="result-elem-name">Sky</div>
+                            <div class="result-elem-mult">x1.3</div>
+                        </div>
+                        <div class="result-elem-item re-nature">
+                            <div class="result-elem-score">3.5</div>
+                            <div class="result-elem-icon"><img src="./assets/切图/nature.svg" alt="Nature"></div>
+                            <div class="result-elem-name">Nature</div>
+                            <div class="result-elem-mult">x1.6</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="result-energy-display">
+                    <img src="./assets/切图/+8.6 Energy.svg" alt="+8.6 Energy">
+                </div>
+            </div>
+
+            <div class="gesture-bar"></div>
+        </section>
+
+        <!-- ==================== 屏幕5：图库 / Light Archive ==================== -->
+        <section class="screen" data-screen="archive" id="screen-archive">
+            <div class="archive-hd">
+                <div class="archive-nav">
+                    <div class="arch-back tap" data-back>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" stroke-width="2.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+                    </div>
+                    <div class="archive-filter-btn tap">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+                    </div>
+                </div>
+                <div class="archive-title">Light Archive</div>
+                <div class="archive-date-nav">
+                    <span class="archive-date-text">Tuesday, June 23, 2026</span>
+                    <div class="date-arrows">
+                        <div class="tap" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.5)" stroke-width="2.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+                        </div>
+                        <div class="tap" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.5)" stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="padding:0 22px;">
+                <div class="cal-day-header" style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;">
+                    <span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span><span>SUN</span>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:6px;">
+                    <div class="cal-cell empty"></div>
+                    <div class="cal-cell empty"></div>
+                    <div class="cal-cell empty"></div>
+                    <div class="cal-cell empty"></div>
+                    <div class="cal-cell empty"></div>
+                    <div class="cal-cell has-leaf today" style="background:rgba(227,245,245,0.45);color:#1a1a1a;" onclick="selectCalCell(this)">31</div>
+                    <div class="cal-cell has-leaf" onclick="selectCalCell(this)"></div>
+
+                    <div class="cal-cell has-leaf" style="background:#E3F5F5;color:#1a1a1a;" onclick="selectCalCell(this)">2</div>
+                    <div class="cal-cell has-leaf" onclick="selectCalCell(this)"></div>
+                    <div class="cal-cell has-leaf" onclick="selectCalCell(this)"></div>
+                    <div class="cal-cell has-leaf" onclick="selectCalCell(this)"></div>
+                    <div class="cal-cell has-leaf" onclick="selectCalCell(this)"></div>
+                    <div class="cal-cell has-leaf" style="background:#E3F5F5;color:#1a1a1a;" onclick="selectCalCell(this)">7</div>
+                    <div class="cal-cell has-leaf" onclick="selectCalCell(this)"></div>
+
+                    <div class="cal-cell has-leaf" onclick="selectCalCell(this)"></div>
+                    <div class="cal-cell has-leaf" style="background:#E3F5F5;color:#1a1a1a;" onclick="selectCalCell(this)">10</div>
+                    <div class="cal-cell has-leaf" onclick="selectCalCell(this)"></div>
+                    <div class="cal-cell has-leaf" onclick="selectCalCell(this)"></div>
+                    <div class="cal-cell has-leaf" onclick="selectCalCell(this)"></div>
+                    <div class="cal-cell has-leaf" onclick="selectCalCell(this)"></div>
+                    <div class="cal-cell has-leaf" onclick="selectCalCell(this)"></div>
+
+                    <div class="cal-cell has-leaf" onclick="selectCalCell(this)"></div>
+                    <div class="cal-cell has-leaf" onclick="selectCalCell(this)"></div>
+                    <div class="cal-cell has-leaf" onclick="selectCalCell(this)"></div>
+                    <div class="cal-cell has-leaf" onclick="selectCalCell(this)"></div>
+                    <div class="cal-cell has-leaf" onclick="selectCalCell(this)"></div>
+                    <div class="cal-cell has-leaf" onclick="selectCalCell(this)"></div>
+                    <div class="cal-cell has-leaf today" style="background:#E3F5F5;color:#1a1a1a;" onclick="selectCalCell(this)">22</div>
+                </div>
+            </div>
+
+            <div style="padding:16px 22px 0;">
+                <div class="archive-photo-card">
+                    <img src="./assets/切图/图片群组.svg" alt="photo group">
+                    <div class="archive-photo-score">
+                        <span class="score-icon"></span>
+                        <span class="score-val">+8.6</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="archive-element-bars">
+                <img src="./assets/切图/四要素进度条.svg" alt="element bars">
+            </div>
+
+            <div class="gesture-bar dark"></div>
+        </section>
+
+        <!-- ==================== 屏幕6：我的 ==================== -->
+        <section class="screen" data-screen="profile" id="screen-profile">
+            <div class="profile-page">
+                <div class="status-bar" style="color:#1a1a1a;">
+                    <span>9:41</span>
+                    <div class="status-icons">
+                        <svg width="17" height="12" viewBox="0 0 17 12" fill="#1a1a1a"><rect x="0" y="5" width="3" height="7" rx="0.5"/><rect x="4.5" y="3" width="3" height="9" rx="0.5"/><rect x="9" y="1" width="3" height="11" rx="0.5"/><rect x="13.5" y="0" width="3" height="12" rx="0.5" opacity="0.3"/></svg>
+                        <svg width="26" height="13" viewBox="0 0 26 13" fill="none"><rect x="0.5" y="0.5" width="22" height="12" rx="3.5" stroke="#1a1a1a" stroke-opacity="0.5"/><rect x="1.5" y="1.5" width="17" height="10" rx="2.5" fill="#1a1a1a"/><path d="M24 4.5v4a2 2 0 000-4z" fill="#1a1a1a" fill-opacity="0.4"/></svg>
+                    </div>
+                </div>
+                <div class="profile-nav">
+                    <div class="profile-back tap" data-back>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" stroke-width="2.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+                    </div>
+                    <div class="profile-avatar-btn tap">
+                        <img src="./assets/切图/我的-icon.svg" alt="avatar" style="width:24px;height:24px;">
+                    </div>
+                </div>
+
+                <div class="profile-section-title">Current Plants</div>
+                <div class="my-plants-row">
+                    <img src="./assets/切图/我的卡片.svg" alt="current plant" style="height:180px;border-radius:16px;max-width:100%;object-fit:cover;">
+                </div>
+
+                <div class="profile-section-title">My Plants</div>
+                <div class="my-plants-row">
+                    <img src="./assets/切图/myplant.svg" alt="My Plants" style="width:100%;max-width:340px;height:auto;display:block;">
+                </div>
+
+                <div class="profile-section-title">Light Archive</div>
+                <div class="profile-archive-cal">
+                    <div class="cal-day-header" style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;">
+                        <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+                    </div>
+                    <div class="pac-grid" style="margin-top:6px;">
+                        <div class="pac-cell empty"></div>
+                        <div class="pac-cell empty"></div>
+                        <div class="pac-cell empty"></div>
+                        <div class="pac-cell empty"></div>
+                        <div class="pac-cell empty"></div>
+                        <div class="pac-cell has-leaf today" style="background:rgba(227,245,245,0.45);color:#1a1a1a;" onclick="selectCalCell(this)">31</div>
+                        <div class="pac-cell has-leaf" onclick="selectCalCell(this)"></div>
+                        <div class="pac-cell has-leaf" style="background:#E3F5F5;color:#1a1a1a;" onclick="selectCalCell(this)">2</div>
+                        <div class="pac-cell has-leaf" onclick="selectCalCell(this)"></div>
+                        <div class="pac-cell has-leaf" onclick="selectCalCell(this)"></div>
+                        <div class="pac-cell has-leaf" onclick="selectCalCell(this)"></div>
+                        <div class="pac-cell has-leaf" onclick="selectCalCell(this)"></div>
+                        <div class="pac-cell has-leaf" style="background:#E3F5F5;color:#1a1a1a;" onclick="selectCalCell(this)">7</div>
+                        <div class="pac-cell has-leaf" onclick="selectCalCell(this)"></div>
+                        <div class="pac-cell has-leaf" onclick="selectCalCell(this)"></div>
+                        <div class="pac-cell has-leaf" style="background:#E3F5F5;color:#1a1a1a;" onclick="selectCalCell(this)">10</div>
+                        <div class="pac-cell has-leaf" onclick="selectCalCell(this)"></div>
+                        <div class="pac-cell has-leaf" onclick="selectCalCell(this)"></div>
+                        <div class="pac-cell has-leaf" onclick="selectCalCell(this)"></div>
+                        <div class="pac-cell has-leaf" onclick="selectCalCell(this)"></div>
+                        <div class="pac-cell has-leaf" onclick="selectCalCell(this)"></div>
+                        <div class="pac-cell has-leaf" onclick="selectCalCell(this)"></div>
+                        <div class="pac-cell has-leaf" onclick="selectCalCell(this)"></div>
+                        <div class="pac-cell has-leaf" onclick="selectCalCell(this)"></div>
+                        <div class="pac-cell has-leaf" onclick="selectCalCell(this)"></div>
+                        <div class="pac-cell has-leaf" onclick="selectCalCell(this)"></div>
+                        <div class="pac-cell has-leaf today" style="background:#E3F5F5;color:#1a1a1a;" onclick="selectCalCell(this)">22</div>
+                    </div>
+                </div>
+
+                <div class="profile-section-title">Weekly Elements</div>
+                <div class="weekly-elements">
+                    <div class="we-row">
+                        <div class="we-radar">
+                            <svg viewBox="0 0 100 100">
+                                <polygon points="50,10 90,50 50,90 10,50" fill="none" stroke="rgba(0,0,0,0.1)" stroke-width="1"/>
+                                <polygon points="50,25 75,50 50,75 25,50" fill="none" stroke="rgba(0,0,0,0.1)" stroke-width="1"/>
+                                <line x1="50" y1="10" x2="50" y2="90" stroke="rgba(0,0,0,0.05)" stroke-width="1"/>
+                                <line x1="10" y1="50" x2="90" y2="50" stroke="rgba(0,0,0,0.05)" stroke-width="1"/>
+                                <polygon points="50,18 82,50 50,70 20,50" fill="rgba(125,212,168,0.3)" stroke="rgba(125,212,168,0.8)" stroke-width="1.5"/>
+                            </svg>
+                        </div>
+                        <div class="we-list">
+                            <div class="we-item">
+                                <div class="we-dot" style="background:#FFD97D;"></div>
+                                <span class="we-item-name">Sun</span>
+                                <span class="we-item-val">3.2</span>
+                                <div class="we-item-bar"><div class="we-item-fill" style="width:80%;background:#FFD97D;"></div></div>
+                            </div>
+                            <div class="we-item">
+                                <div class="we-dot" style="background:#71D4F3;"></div>
+                                <span class="we-item-name">Water</span>
+                                <span class="we-item-val">2.1</span>
+                                <div class="we-item-bar"><div class="we-item-fill" style="width:52%;background:#71D4F3;"></div></div>
+                            </div>
+                            <div class="we-item">
+                                <div class="we-dot" style="background:#74B9FF;"></div>
+                                <span class="we-item-name">Sky</span>
+                                <span class="we-item-val">2.8</span>
+                                <div class="we-item-bar"><div class="we-item-fill" style="width:70%;background:#74B9FF;"></div></div>
+                            </div>
+                            <div class="we-item">
+                                <div class="we-dot" style="background:#7DD4A8;"></div>
+                                <span class="we-item-name">Nature</span>
+                                <span class="we-item-val">3.5</span>
+                                <div class="we-item-bar"><div class="we-item-fill" style="width:88%;background:#7DD4A8;"></div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </div><!-- /screen-stack -->
+</div><!-- /phone -->
+
+<div class="hint">💡 Tap splash → Choose plant → Tap FAB on home screen to explore</div>
+
+<script>
+    var navHistory = ['splash'];
+    var cameraCapturedThisSession = false;
+
+    function go(name) {
+        var current = document.querySelector('.screen.active');
+        var next = document.querySelector('[data-screen="' + name + '"]');
+        if (!next || current === next) return;
+
+        current.classList.add('exit-left');
+        current.classList.remove('active');
+        next.classList.add('active');
+
+        setTimeout(function() { current.classList.remove('exit-left'); }, 360);
+
+        if (navHistory[navHistory.length - 1] !== name) navHistory.push(name);
+
+        if (name === 'choose') setTimeout(initCarousel, 60);
+        if (current.dataset.screen === 'home') resetFab();
+        
+        if (name === 'camera') {
+            setTimeout(autoOpenCamera, 300);
+        }
+        
+        if (name === 'home') {
+            var video = document.getElementById('home-video');
+            if (video) {
+                video.playbackRate = 0.3;
+            }
+        }
+    }
+
+    function back() {
+        if (navHistory.length <= 1) return;
+        navHistory.pop();
+        var prevName = navHistory[navHistory.length - 1];
+        var current = document.querySelector('.screen.active');
+        var prev = document.querySelector('[data-screen="' + prevName + '"]');
+        if (!prev) return;
+
+        current.style.cssText = 'transition:opacity 0.26s,transform 0.26s;transform:translateX(36px);opacity:0;pointer-events:none;';
+        setTimeout(function() {
+            current.classList.remove('active');
+            current.style.cssText = '';
+            prev.classList.add('active');
+            
+            if (current.dataset.screen === 'camera') {
+                if (cameraCapturedThisSession) {
+                    switchHomeVideo('./assets/视频/动画-向日葵-生长.mp4');
+                    cameraCapturedThisSession = false;
+                }
+                resetCameraState();
+            }
+        }, 280);
+    }
+
+    function autoOpenCamera() {
+        var screen = document.getElementById('screen-camera');
+        if (screen) {
+            screen.classList.add('camera-opened');
+        }
+        var hint = document.getElementById('vf-hint');
+        if (hint) {
+            hint.style.opacity = '0';
+        }
+    }
+
+    function onShutter() {
+        cameraCapturedThisSession = true;
+
+        // 1. 显示扫描线动画
+        var scanLine = document.getElementById('scan-line');
+        if (scanLine) scanLine.classList.add('scanning');
+
+        // 2. 隐藏提示文字
+        var hint = document.getElementById('vf-hint');
+        if (hint) hint.style.opacity = '0';
+
+        // 3. 扫描完成后直接显示结果
+        setTimeout(function() {
+            if (scanLine) scanLine.classList.remove('scanning');
+            showResultOverlay();
+        }, 2000);
+    }
+
+    function showResultOverlay() {
+        var resultOverlay = document.getElementById('cam-result-overlay');
+        if (resultOverlay) {
+            resultOverlay.classList.add('show');
+        }
+        // 快门按钮与结果同步变黄色
+        var shutterBtn = document.getElementById('cam-shutter-btn');
+        if (shutterBtn) shutterBtn.src = './assets/切图/拍摄页-拍摄按钮-点击后.svg';
+    }
+
+    function resetCameraState() {
+        var screen = document.getElementById('screen-camera');
+        if (screen) {
+            screen.classList.remove('camera-opened');
+        }
+        var hint = document.getElementById('vf-hint');
+        if (hint) {
+            hint.style.opacity = '1';
+        }
+        var scanLine = document.getElementById('scan-line');
+        if (scanLine) {
+            scanLine.classList.remove('scanning');
+        }
+        var overlay = document.getElementById('cam-analyzing');
+        if (overlay) {
+            overlay.classList.remove('show');
+        }
+        var resultOverlay = document.getElementById('cam-result-overlay');
+        if (resultOverlay) {
+            resultOverlay.classList.remove('show');
+        }
+    }
+
+    function selectCalCell(cell) {
+        var allCells = document.querySelectorAll('.cal-cell, .pac-cell');
+        allCells.forEach(function(c) {
+            c.classList.remove('selected');
+        });
+        cell.classList.add('selected');
+    }
+
+    function switchHomeVideo(src) {
+        var video = document.getElementById('home-video');
+        if (video) {
+            video.src = src;
+            video.load();
+            video.play();
+        }
+    }
+
+    var fabExpanded = false;
+
+    function toggleFab() {
+        if (fabExpanded) {
+            collapseFab();
+        } else {
+            expandFab();
+        }
+    }
+
+    function expandFab() {
+        fabExpanded = true;
+        var container = document.getElementById('fab-container');
+        var backdrop = document.getElementById('fab-backdrop');
+        var img = document.getElementById('fab-main-img');
+        if (container) container.classList.add('expanded');
+        if (backdrop) backdrop.style.display = 'block';
+    }
+
+    function collapseFab() {
+        fabExpanded = false;
+        var container = document.getElementById('fab-container');
+        var backdrop = document.getElementById('fab-backdrop');
+        var img = document.getElementById('fab-main-img');
+        if (container) container.classList.remove('expanded');
+        if (backdrop) backdrop.style.display = 'none';
+        if (img) img.src = './assets/切图/右下角-悬浮icon-收起状态.svg';
+    }
+
+    function resetFab() {
+        collapseFab();
+        hideDataPanel();
+        hideProgressBar();
+    }
+
+    var progressShowing = false;
+
+    function showProgressBar() {
+        progressShowing = true;
+        var monologue = document.getElementById('home-monologue');
+        if (monologue) monologue.style.display = 'none';
+        var fabImg = document.getElementById('fab-main-img');
+        if (fabImg) fabImg.src = './assets/切图/收纳态icon.svg';
+        var backdrop = document.getElementById('progress-backdrop');
+        if (backdrop) backdrop.style.display = 'block';
+        var gradient = document.getElementById('progress-gradient-overlay');
+        if (gradient) {
+            gradient.classList.add('show');
+        }
+        var bar = document.getElementById('home-progress-bar');
+        if (bar) {
+            bar.style.display = 'block';
+            requestAnimationFrame(function() {
+                bar.style.opacity = '1';
+                bar.style.transform = 'translateY(0)';
+            });
+        }
+    }
+
+    function hideProgressBar() {
+        progressShowing = false;
+        var bar = document.getElementById('home-progress-bar');
+        if (bar) {
+            bar.style.opacity = '0';
+            bar.style.transform = 'translateY(20px)';
+            setTimeout(function() { if (bar) bar.style.display = 'none'; }, 320);
+        }
+        var backdrop = document.getElementById('progress-backdrop');
+        if (backdrop) backdrop.style.display = 'none';
+        var gradient = document.getElementById('progress-gradient-overlay');
+        if (gradient) {
+            gradient.classList.remove('show');
+        }
+        var fabImg = document.getElementById('fab-main-img');
+        if (fabImg) fabImg.src = './assets/切图/右下角-悬浮icon-收起状态.svg';
+        var monologue = document.getElementById('home-monologue');
+        if (monologue) monologue.style.display = 'block';
+    }
+
+    function showDataPanel() {
+        var root = document.getElementById('fab-root');
+        var img = document.getElementById('fab-main-img');
+        fabExpanded = false;
+        root.classList.remove('expanded');
+        img.src = './assets/切图/右下角-悬浮icon-数据展示态.svg';
+        document.getElementById('fab-data-panel').classList.add('show');
+    }
+
+    function hideDataPanel() {
+        document.getElementById('fab-data-panel').classList.remove('show');
+        var img = document.getElementById('fab-main-img');
+        if (img) img.src = './assets/切图/右下角-悬浮icon-收起状态.svg';
+    }
+
+    var carouselIdx = 1;
+    var carouselTotal = 3;
+    var isTransitioning = false;
+
+    function carouselOffset(idx) {
+        var outerW = 430;
+        var cardW  = 300;
+        var gap    = 16;
+        var startX = (outerW - cardW) / 2;
+        return -(idx * (cardW + gap)) + startX;
+    }
+
+    function updateCards(idx) {
+        document.querySelectorAll('.choose-card').forEach(function(card) {
+            var i = parseInt(card.dataset.idx);
+            card.classList.remove('active', 'side', 'side-left', 'side-right');
+            if (i === idx) {
+                card.classList.add('active');
+            } else if (i < idx) {
+                card.classList.add('side-left');
+            } else {
+                card.classList.add('side-right');
+            }
+        });
+
+        document.querySelectorAll('.choose-dot').forEach(function(dot, i) {
+            var realIdx = (idx - 1) % carouselTotal;
+            if (realIdx < 0) realIdx += carouselTotal;
+            dot.classList.toggle('active', i === realIdx);
+        });
+    }
+
+    function carouselGo(idx, animate) {
+        if (isTransitioning && animate !== false) return;
+        
+        var track = document.getElementById('choose-track');
+        if (!track) return;
+
+        if (animate === false) {
+            track.style.transition = 'none';
+        } else {
+            isTransitioning = true;
+        }
+
+        carouselIdx = idx;
+        track.style.transform = 'translateX(' + carouselOffset(idx) + 'px)';
+        updateCards(idx);
+
+        if (animate !== false) {
+            setTimeout(function() {
+                isTransitioning = false;
+                // Infinite loop: if at boundaries, jump to middle
+                if (carouselIdx === 0) {
+                    carouselIdx = carouselTotal;
+                    track.style.transition = 'none';
+                    track.style.transform = 'translateX(' + carouselOffset(carouselIdx) + 'px)';
+                    updateCards(carouselIdx);
+                    setTimeout(function() { track.style.transition = ''; }, 30);
+                } else if (carouselIdx === carouselTotal + 1) {
+                    carouselIdx = 1;
+                    track.style.transition = 'none';
+                    track.style.transform = 'translateX(' + carouselOffset(carouselIdx) + 'px)';
+                    updateCards(carouselIdx);
+                    setTimeout(function() { track.style.transition = ''; }, 30);
+                }
+            }, 380);
+        }
+    }
+
+    function initCarousel() {
+        carouselIdx = 1; // Default to sunflower (index 1 in the duplicated array)
+        var track = document.getElementById('choose-track');
+        if (track) {
+            track.style.transition = 'none';
+            track.style.transform  = 'translateX(' + carouselOffset(1) + 'px)';
+            setTimeout(function() { if (track) track.style.transition = ''; }, 30);
+        }
+        updateCards(1);
+    }
+
+    (function() {
+        var startX   = 0;
+        var dragging = false;
+
+        function onDragStart(x) {
+            var outer = document.getElementById('choose-carousel-outer');
+            startX   = x;
+            dragging = true;
+        }
+        function onDragEnd(x) {
+            if (!dragging) return;
+            dragging = false;
+            var dx = x - startX;
+            if (Math.abs(dx) > 40) {
+                carouselGo(dx < 0 ? carouselIdx + 1 : carouselIdx - 1);
+            }
+        }
+
+        document.addEventListener('touchstart', function(e) {
+            var outer = document.getElementById('choose-carousel-outer');
+            if (outer && outer.contains(e.target)) onDragStart(e.touches[0].clientX);
+        }, { passive: true });
+        document.addEventListener('touchend', function(e) {
+            onDragEnd(e.changedTouches[0].clientX);
+        });
+
+        document.addEventListener('mousedown', function(e) {
+            var outer = document.getElementById('choose-carousel-outer');
+            if (outer && outer.contains(e.target)) {
+                onDragStart(e.clientX);
+                e.preventDefault();
+            }
+        });
+        document.addEventListener('mouseup', function(e) {
+            onDragEnd(e.clientX);
+        });
+        document.addEventListener('mouseleave', function() { dragging = false; });
+    })();
+
+    document.querySelectorAll('[data-go]').forEach(function(el) {
+        el.addEventListener('click', function(e) { e.stopPropagation(); go(el.dataset.go); });
+    });
+    document.querySelectorAll('[data-back]').forEach(function(el) {
+        el.addEventListener('click', function(e) { e.stopPropagation(); back(); });
+    });
+</script>
+
+</body>
+</html>
