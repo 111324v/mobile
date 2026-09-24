@@ -1,0 +1,2006 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M5 19C5 9 13 5 20 5c0 8-4 14-13 14' fill='%233d9a55'/></svg>">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Photosynthesis · 光合作用</title>
+<script type="importmap">
+{"imports":{
+  "three":"https://unpkg.com/three@0.160.0/build/three.module.js",
+  "three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"
+}}
+</script>
+<style>
+:root{
+  /* ========== 设计令牌 · 全局唯一来源 ==========
+     层级：基础色板 → 字体 → 圆角 → 间距 → 阴影 → 层级 → 动效
+     规则：样式表内禁止再出现裸色值/裸字号；组件只消费令牌 */
+
+  /* ---- 色彩 · 中性 ---- */
+  --ink:#1a1a1a;            /* 主文字 / 深色按钮底 */
+  --ink-plant:#0c3318;      /* 植物语境深绿文字 */
+  --ink-forest:#1a4a22;     /* 标题副行森林绿 */
+  --ink-soft:#3d5c38;       /* 弱化绿灰（卡片小字） */
+  --muted:#66707a;          /* 次要说明文字 */
+  --paper:#ffffff;          /* 卡片白 */
+  --cream:#fff6e5;          /* 页面米色底 / 弹层底 */
+  --line:#eeeeee;           /* 浅分隔线 / 描边 */
+  --line-cream:#e5e2d5;     /* 米色系虚线 */
+  --fill:#f0f0f0;           /* 进度槽灰底 */
+
+  /* ---- 色彩 · 绿（植物主色） ---- */
+  --green-900:#2a6010;      /* 标题绿 / 强调深绿 */
+  --green-700:#3d9a55;      /* 主按钮 / 主图标描边 */
+  --green-500:#4caf50;      /* 选中态 / CTA 箭头 */
+  --green-400:#6fcf7a;      /* 开关 / 渐变起点 / 焦点线 */
+  --green-200:#7dd48a;      /* 进度条渐变浅端 */
+  --green-100:#eaf7e6;      /* 图标底浅绿 */
+  --green-50:#f3faf0;       /* 四要素格子底 */
+
+  /* ---- 色彩 · 太阳（奖励/高亮） ---- */
+  --sun-50:#fff8e8;         /* 进行中卡片底 */
+  --sun-100:#fff6c8;        /* 徽章高光端 */
+  --sun-200:#ffe066;        /* 黄色高亮（标题字/当前阶段点） */
+  --sun-400:#ffb547;        /* 太阳主橙 */
+  --sun-600:#f08a2e;        /* 太阳深橙（渐变端） */
+  --sun-800:#c96a00;        /* 橙色数字 / 深描边 */
+
+  /* ---- 色彩 · 玫瑰（分数/礼物） ---- */
+  --rose-50:#fff5f6;
+  --rose-200:#f8bbd0;
+  --rose-500:#e85a6b;
+
+  /* ---- 色彩 · 天空与水 ---- */
+  --sky-300:#8fd3ff;        /* 天空蓝 / 渐变起点 */
+  --water-400:#7ec8ff;      /* 水滴 / 水流线 */
+  --mint-200:#c9f0e0;       /* 薄荷渐变端 */
+
+  /* ---- 色彩 · 语义别名 ---- */
+  --c-text:var(--ink);
+  --c-text-muted:var(--muted);
+  --c-bg-page:var(--cream);
+  --c-bg-card:var(--paper);
+  --c-on-dark:#ffffff;                       /* 深底上的文字/图标 */
+  --switch-off:#dcdcdc;                      /* 开关关闭态 */
+  --overlay:rgba(20,32,24,.45);   /* 弹层遮罩 */
+  --toast-bg:rgba(20,32,24,.9);   /* 吐司底 */
+
+  /* ---- 色彩 · 玻璃拟态（HUD 浮层） ---- */
+  --glass-bg:rgba(255,255,255,.88);          /* 气泡/快捷卡底 */
+  --glass-chip:rgba(255,255,255,.28);        /* 胶囊导航底 */
+  --glass-chip-line:rgba(255,255,255,.4);    /* 胶囊描边 */
+  --glass-txt:rgba(255,255,255,.85);         /* 胶囊文字 */
+  --glass-txt-strong:rgba(255,255,255,.9);   /* 底板小字 */
+  --glass-dark:rgba(18,48,26,.42);           /* 进度底板 */
+  --glass-dark-line:rgba(255,255,255,.28);   /* 底板描边 */
+  --glass-track:rgba(0,0,0,.15);             /* 底板进度槽 */
+  --glass-dot:rgba(255,255,255,.3);          /* 阶段点未达 */
+  --glass-dot-done:rgba(255,255,255,.6);     /* 阶段点已完成 */
+  --frost-55:rgba(255,255,255,.55);          /* 头像钮底 */
+  --frost-85:rgba(255,255,255,.85);          /* 头像钮描边 */
+  --glass-photo:rgba(255,255,255,.35);       /* 明信片相框 */
+
+  /* ---- 色彩 · 场景艺术色（像素风景插画） ---- */
+  --void:#142018;                  /* 页外深底 */
+  --bezel:#111; --bezel-edge:#2a2a2a; --notch:#000;
+  --sky-top:#5ec8f8; --sky-mid:#8fd8ef;
+  --field-lt:#b8e8c8; --field:#8fc86a; --field-deep:#6aaa48;
+  --hill-lt:#8fc86a; --hill-deep:#5f9a3a; --hill-stripe:#7cba55;
+  --grass-1:#4f9a32; --grass-2:#3d8a28;
+  --cloud-shade:rgba(185,212,232,.55); --cloud-float:rgba(120,170,210,.3);
+  --cloud-edge:#f0f7fc;
+  --wing-lt:#ffd6e0; --wing-dp:#ff9aa2;
+  --sun-glow:#ffe08a;              /* 相机钮高光端 */
+  --choose-top:#ffd900; --choose-btm:#fefade;   /* 选卡页晨光底 */
+  --leaf-mid:#b8e08a;               /* 明信片草地端 */
+  --dot-dim:rgba(0,0,0,.2);        /* 轮播指示点 */
+
+  /* ---- 字体 ---- */
+  --font-disp:'Segoe UI',system-ui;                                            /* 展示：数字/大标题 */
+  --font-body:'PingFang SC','Noto Sans SC',-apple-system,system-ui,sans-serif; /* 正文 */
+  --fw-semibold:600; --fw-bold:700; --fw-black:800;
+  --fs-2xs:9px;   /* 快捷卡副标 */
+  --fs-xs:10px;   /* 标签/角标 */
+  --fs-sm:11px;   /* 次级按钮 / 说明 */
+  --fs-md:12px;   /* 弱说明 */
+  --fs-base:13px; /* 正文基准 */
+  --fs-lg:14px;   /* 卡片标题 */
+  --fs-xl:15px;   /* 主按钮 */
+  --fs-2xl:18px;  /* 弹层标题 / 输入 */
+  --fs-3xl:21px;  /* 选卡名 */
+  --fs-4xl:24px;  /* 子页标题 */
+  --fs-5xl:28px;  /* 计时大数字 */
+  --fs-stat:20px; /* 底板今日数字 */
+  --fs-6xl:34px;  /* 结算大数字 */
+  --fs-7xl:36px;  /* 主页大标题 */
+
+  /* ---- 圆角 ---- */
+  --r-2xs:3px;     /* 阶段点半径 */
+  --r-xs:6px;      /* 细条/标签 */
+  --r-sm:12px;     /* 输入框/历史条 */
+  --r-md:16px;     /* 卡片/按钮 */
+  --r-lg:22px;     /* 大卡片 */
+  --r-xl:28px;     /* 选卡/弹层顶 */
+  --r-2xl:42px;    /* 机身 */
+  --r-full:999px;  /* 胶囊 */
+  --r-round:50%;   /* 圆形 */
+
+  /* ---- 间距（4px 网格） ---- */
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px;
+  --sp-5:20px; --sp-6:24px; --sp-7:28px; --sp-8:32px; --sp-9:36px;
+
+  /* ---- 阴影 ---- */
+  --sh-card:0 8px 24px rgba(0,0,0,.06);        /* 白卡片 */
+  --sh-soft:0 6px 18px rgba(0,0,0,.05);        /* 浮层软影 */
+  --sh-pop:0 4px 14px rgba(0,0,0,.08);         /* 可点卡片 */
+  --sh-flat:0 4px 12px rgba(0,0,0,.04);        /* 列表行 */
+  --sh-hero:0 18px 50px rgba(0,0,0,.18);       /* 轮播主卡 */
+  --sh-float:0 10px 28px rgba(240,138,46,.4);  /* 相机 FAB */
+  --sh-sun:0 6px 18px rgba(240,138,46,.35);    /* 太阳徽章 */
+  --sh-btn:0 6px 16px rgba(61,154,85,.35);     /* 主按钮绿光 */
+  --sh-post:0 10px 30px rgba(0,0,0,.1);        /* 明信片 */
+
+  /* ---- 层级 ---- */
+  --z-scenery:3; --z-stage:8; --z-fx:20; --z-hud:25; --z-card:28;
+  --z-dock:40; --z-page:50; --z-sheet:200; --z-toast:300;
+
+  /* ---- 动效 ---- */
+  --ease-out:cubic-bezier(.32,.72,0,1);
+  --dur-fast:.2s; --dur-mid:.38s; --dur-slow:.45s;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;font-family:var(--font-body);background:var(--void);color:var(--c-text)}
+body{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--sp-3);padding:var(--sp-4)}
+.chrome{color:var(--glass-txt);font-size:var(--fs-base);text-align:center;line-height:1.5}
+.phone{width:min(430px,100vw);height:min(932px,100vh);border-radius:var(--r-2xl);overflow:hidden;position:relative;background:var(--bezel);box-shadow:0 0 0 3px var(--bezel-edge),0 30px 90px rgba(0,0,0,.55)}
+@media (max-width:480px){.chrome{display:none}.phone{width:100vw;height:100vh;height:100dvh;border-radius:0}}
+.notch{position:absolute;top:var(--sp-3);left:50%;transform:translateX(-50%);width:12px;height:12px;background:var(--notch);border-radius:var(--r-round);z-index:120}
+.screens{position:absolute;inset:0;overflow:hidden}
+.screen{position:absolute;inset:0;display:none}
+.screen.on{display:flex;flex-direction:column}
+
+.stage-pixel{position:absolute;inset:0;z-index:0;background:linear-gradient(180deg,var(--sky-top) 0%,var(--sky-mid) 28%,var(--field-lt) 52%,var(--field) 72%,var(--field-deep) 100%)}
+/* ---------- 环境系统：昼夜随真实时间 + 雨雪随拍照识别（仅保留一天） ---------- */
+.env-layer{position:absolute;inset:0;z-index:0;pointer-events:none}
+.env-layer.p-day{background:linear-gradient(180deg,var(--sky-top) 0%,var(--sky-mid) 28%,var(--field-lt) 52%,var(--field) 72%,var(--field-deep) 100%)}
+.env-layer.p-evening{background:linear-gradient(180deg,#8a6bb0 0%,#e78a5e 34%,#f4b268 52%,#5c7a52 78%,#3f5c40 100%)}
+.env-layer.p-night{background:linear-gradient(180deg,#0e1a3a 0%,#1c2b57 34%,#27407a 52%,#17301f 78%,#0f2415 100%)}
+.env-tint{position:absolute;inset:0;z-index:9;pointer-events:none;opacity:0;transition:opacity 1s ease}
+.env-tint.t-evening{opacity:1;background:linear-gradient(180deg,rgba(255,150,60,.10),rgba(120,60,120,.16))}
+.env-tint.t-night{opacity:1;background:linear-gradient(180deg,rgba(10,20,60,.30),rgba(5,15,40,.38))}
+.env-tint.t-rain{opacity:1;background:linear-gradient(180deg,rgba(60,80,110,.20),rgba(40,60,90,.28))}
+.env-tint.t-snow{opacity:1;background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(215,232,255,.20))}
+.env-fx{position:absolute;inset:0;z-index:9;pointer-events:none;overflow:hidden}
+.env-fx i{position:absolute;top:-12%;width:2px;height:15px;border-radius:2px;
+  background:linear-gradient(rgba(190,215,255,0),rgba(200,222,255,.85));animation:fallRain linear infinite}
+.env-fx.fx-snow i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.92);
+  box-shadow:0 0 6px rgba(255,255,255,.75);animation:fallSnow linear infinite}
+@keyframes fallRain{to{transform:translateY(115vh)}}
+@keyframes fallSnow{to{transform:translateY(112vh) translateX(5vw)}}
+/* 主页草地小花装饰 */
+.home-flora{position:absolute;bottom:calc(22% - 12px);left:0;right:0;height:64px;z-index:3;pointer-events:none}
+.home-flora svg{width:100%;height:100%;display:block}
+/* 环境询问对话框 */
+.env-ask{position:fixed;inset:0;z-index:90;display:none;place-items:center;background:rgba(10,25,15,.35)}
+.env-ask.on{display:grid}
+.env-ask .box{width:min(320px,84vw);background:#fff;border:2px solid #e3efdd;border-radius:20px;padding:18px 16px 14px;
+  box-shadow:0 18px 50px rgba(0,0,0,.28);text-align:center}
+.env-ask .box p{font-size:15px;font-weight:700;color:#1e4d2b;line-height:1.6;margin:0 0 14px}
+.env-ask .row{display:flex;gap:10px;justify-content:center}
+.env-ask button{border:0;border-radius:999px;padding:9px 24px;font-size:14px;font-weight:800;cursor:pointer}
+.env-ask .yes{background:#2ea44f;color:#fff}
+.env-ask .yes:active{transform:scale(.95)}
+.env-ask .no{background:#eef3ee;color:#40614c}
+.env-ask .no:active{transform:scale(.95)}
+.px-cloud{position:absolute;height:40px;background:linear-gradient(180deg,var(--paper) 0%,var(--paper) 60%,var(--cloud-edge) 100%);border-radius:var(--r-full);z-index:2;pointer-events:none;box-shadow:inset 0 -10px 14px var(--cloud-shade);filter:drop-shadow(0 12px 18px var(--cloud-float))}
+.px-cloud:before,.px-cloud:after{content:"";position:absolute;background:linear-gradient(180deg,var(--paper) 55%,var(--cloud-edge) 100%);border-radius:var(--r-round);box-shadow:inset -5px -7px 12px var(--cloud-shade)}
+.px-cloud:before{width:54%;aspect-ratio:1;top:-58%;left:15%}
+.px-cloud:after{width:38%;aspect-ratio:1;top:-32%;right:13%}
+.pc1{width:150px;height:44px;top:236px;left:-36px;animation:cloudMove 95s linear infinite}
+.pc2{width:106px;height:32px;top:64px;left:216px;animation:cloudMove 70s linear infinite;animation-delay:-30s}
+.pc3{width:86px;height:28px;top:150px;right:-14px;animation:cloudMove 82s linear infinite;animation-delay:-52s}
+/* 三朵云形状各异：凸起位置/大小不同，避免看起来一模一样 */
+.pc2:before{width:44%;top:-46%;left:22%}
+.pc2:after{width:30%;top:-22%;right:10%}
+.pc3:before{width:64%;top:-72%;left:8%}
+.pc3:after{display:none}
+@keyframes cloudMove{from{transform:translateX(0)}to{transform:translateX(-420px)}}
+.px-hill{position:absolute;left:0;right:0;bottom:0;height:26%;z-index:1;background:linear-gradient(180deg,var(--hill-lt),var(--hill-deep));border-radius:50% 50% 0 0/28% 28% 0 0}
+.px-hill:after{content:"";position:absolute;left:0;right:0;top:0;height:10px;background:repeating-linear-gradient(90deg,var(--field-deep) 0 3px,var(--hill-stripe) 3px 6px);opacity:.7}
+.px-grass{position:absolute;bottom:22%;left:0;right:0;height:48px;z-index:3;pointer-events:none;background:repeating-linear-gradient(90deg,transparent 0 6px,var(--grass-1) 6px 8px,transparent 8px 14px,var(--grass-2) 14px 15px);mask-image:linear-gradient(180deg,transparent,#000 30%);-webkit-mask-image:linear-gradient(180deg,transparent,#000 30%)}
+.px-fly{position:absolute;width:18px;height:14px;z-index:4;pointer-events:none;animation:flyPath 16s ease-in-out infinite}
+.px-fly .w{position:absolute;width:8px;height:12px;background:linear-gradient(135deg,var(--wing-lt),var(--wing-dp));border-radius:50% 50% 50% 0}
+.px-fly .w.l{left:0;top:1px}
+.px-fly .w.r{right:0;top:1px;transform:scaleX(-1)}
+@keyframes flyPath{0%{transform:translate(40px,120px)}25%{transform:translate(140px,70px)}50%{transform:translate(260px,110px)}75%{transform:translate(180px,160px)}100%{transform:translate(40px,120px)}}
+.px-fly.f1{top:180px;left:30px}
+.px-fly.f2{top:240px;left:260px;animation-duration:22s;animation-delay:-8s}
+
+.status{display:flex;justify-content:space-between;padding:var(--sp-4) 22px var(--sp-1);font-size:var(--fs-base);font-weight:var(--fw-semibold);color:var(--c-on-dark);z-index:30;position:relative;text-shadow:0 1px 2px rgba(0,0,0,.15)}
+.home-hd{position:relative;z-index:25;padding:var(--sp-1) var(--sp-6) 0;display:flex;justify-content:space-between;align-items:flex-start}
+.home-title{font-family:var(--font-disp);font-size:var(--fs-7xl);font-weight:var(--fw-black);color:var(--sun-200);line-height:1;letter-spacing:-.5px;text-shadow:0 2px 0 rgba(0,0,0,.08)}
+.home-sub{font-family:var(--font-disp);font-size:var(--fs-base);font-weight:var(--fw-bold);letter-spacing:5px;color:var(--ink-forest);text-transform:uppercase;margin-top:var(--sp-1)}
+.top-right{position:relative;display:flex;justify-content:flex-end}
+.sun-badge{position:absolute;top:0;left:0;width:56px;height:56px;border-radius:var(--r-round);background:radial-gradient(circle at 35% 30%,var(--sun-100),var(--sun-400) 55%,var(--sun-600));border:3px solid var(--paper);box-shadow:var(--sh-sun);display:none;place-items:center;cursor:pointer;z-index:31;transform:translate(-50%,-50%)}
+.sun-badge.on{display:grid}
+.sun-badge svg{width:30px;height:30px;animation:spin 8s linear infinite}
+.sun-badge .t{position:absolute;bottom:-18px;font-size:var(--fs-xs);font-weight:var(--fw-black);color:var(--c-on-dark);text-shadow:0 1px 2px rgba(0,0,0,.35);white-space:nowrap}
+.sun-badge .ring{position:absolute;inset:-6px;border-radius:var(--r-round);border:3px solid rgba(255,255,255,.35);border-top-color:var(--sun-200);animation:spin 3s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.avatar-btn{width:40px;height:40px;border-radius:var(--r-round);background:var(--frost-55);border:2px solid var(--frost-85);display:grid;place-items:center;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.avatar-btn svg{width:20px;height:20px}
+.bubble-wrap{margin:64px var(--sp-6) 0;position:relative;z-index:var(--z-hud);align-self:stretch;justify-content:center;display:flex;align-items:center;gap:var(--sp-2)}
+.bubble{position:relative;background:var(--glass-bg);border-radius:var(--r-md);padding:var(--sp-2) var(--sp-3);font-size:var(--fs-base);color:var(--ink-plant);text-align:center;box-shadow:var(--sh-soft);border:2px solid var(--paper);cursor:pointer;max-width:75%}
+.bubble:after{content:"";position:absolute;bottom:-8px;left:50%;margin-left:-6px;width:14px;height:14px;background:var(--glass-bg);transform:rotate(45deg);border-radius:0 0 var(--r-xs) var(--r-xs)}
+.bubble-ack{flex-shrink:0;width:34px;height:34px;border-radius:var(--r-md);background:var(--glass-bg);border:2px solid var(--paper);box-shadow:var(--sh-soft);display:grid;place-items:center;cursor:pointer;padding:0}
+.bubble-ack svg{width:19px;height:19px}
+.bubble-ack.done{background:var(--green-100);border-color:var(--green-400)}
+.bubble-ack:active{transform:scale(.9)}
+.plant-wrap{position:absolute;inset:0;z-index:8}
+#plant3d{width:100%;height:100%;display:block;touch-action:none}
+/* 点击植物时出现的半透明手指（占位素材，后续可替换为真实 PNG 序列） */
+.tap-hand{position:fixed;left:50%;top:50%;width:104px;height:106px;z-index:60;pointer-events:none;opacity:0;
+  transform:translate(-50%,-50%);filter:drop-shadow(0 6px 12px rgba(0,0,0,.18))}
+.tap-hand svg{width:100%;height:100%;display:block}
+.tap-hand.show{animation:tapHandAnim 900ms ease forwards}
+@keyframes tapHandAnim{
+  0%{transform:translate(-50%,-46%) scale(.62);opacity:0}
+  16%{transform:translate(-50%,-50%) scale(1);opacity:.96}
+  52%{transform:translate(-50%,-41%) scale(.9);opacity:.96}
+  78%{transform:translate(-50%,-50%) scale(1);opacity:.9}
+  100%{transform:translate(-50%,-60%) scale(.9);opacity:0}
+}
+
+/* 浇水动画已改为 3D 水壶模型（three.js 场景内） */
+
+.home-foot{position:absolute;left:var(--sp-4);right:var(--sp-4);bottom:188px;z-index:var(--z-card);background:var(--glass-dark);backdrop-filter:blur(10px);border:1px solid var(--glass-dark-line);border-radius:var(--r-md);padding:var(--sp-3) var(--sp-4);display:flex;flex-direction:column;gap:var(--sp-2)}
+.today-box{min-width:88px}
+.today-box .t1{font-size:var(--fs-xs);color:var(--glass-txt-strong)}
+.today-box .t2{font-size:var(--fs-stat);font-weight:var(--fw-black);color:var(--c-on-dark)}
+.prog-side{flex:1;min-width:0}
+.prog-top{display:flex;justify-content:space-between;font-size:var(--fs-sm);color:var(--c-on-dark);margin-bottom:var(--sp-1);font-weight:var(--fw-semibold)}
+.prog-track{height:8px;border-radius:var(--r-xs);background:var(--glass-track);overflow:hidden}
+.prog-fill{height:100%;width:0;border-radius:var(--r-xs);background:linear-gradient(90deg,var(--green-200),var(--sun-200));transition:width var(--dur-slow) ease}
+.prog-next{font-size:var(--fs-xs);color:var(--glass-txt-strong);margin-top:var(--sp-1)}
+.hf-row{display:flex;align-items:center;gap:var(--sp-3)}
+.stage-dots{display:flex;gap:6px;padding:0 2px}
+.stage-dots i{flex:1;height:7px;border-radius:var(--r-2xs);background:var(--glass-dot);overflow:hidden;position:relative}
+.stage-dots i b{position:absolute;inset:0;width:0;border-radius:var(--r-2xs);background:linear-gradient(90deg,var(--green-200),var(--sun-200));transition:width var(--dur-slow) ease}
+.stage-dots i.done b{width:100%}
+.stage-dots i.cur b{box-shadow:0 0 6px rgba(255,224,102,.55)}
+.stage-next-tip{font-size:var(--fs-xs);color:var(--glass-txt-strong);margin-top:var(--sp-1);text-align:center}
+/* 散步进行中状态条（过程性交互，与晒太阳一致） */
+.walk-state{display:none;position:relative;z-index:var(--z-card);margin:0 var(--sp-4);align-items:center;gap:var(--sp-3);padding:var(--sp-2) var(--sp-3);background:var(--paper);border-radius:var(--r-lg);box-shadow:var(--sh-card)}
+.walk-state.on{display:flex}
+.walk-state .ws-ico{width:34px;height:34px;border-radius:var(--r-round);background:var(--mint-200);display:grid;place-items:center;animation:walkBob 1.1s ease-in-out infinite}
+.walk-state .ws-ico svg{width:20px;height:20px;animation:walkStep .55s ease-in-out infinite alternate}
+.walk-state .ws-txt{flex:1;min-width:0}
+.walk-state .ws-txt b{display:block;font-size:var(--fs-base);color:var(--ink)}
+.walk-state .ws-txt p{margin:0;font-size:var(--fs-xs);color:var(--muted)}
+.walk-state .ws-time{font-family:var(--font-disp);font-size:var(--fs-lg);font-weight:var(--fw-bold);color:var(--green-600)}
+.walk-state .ws-end{background:var(--ink);color:var(--c-on-dark);border:0;border-radius:var(--r-full);padding:var(--sp-2) var(--sp-4);font-size:var(--fs-sm);font-weight:var(--fw-bold);cursor:pointer}
+.walk-state .ws-end:active{transform:scale(.95)}
+@keyframes walkBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@keyframes walkStep{from{transform:rotate(-8deg)}to{transform:rotate(8deg)}}
+
+/* 人植快捷动作条 */
+.act-row{position:absolute;left:var(--sp-4);right:var(--sp-4);bottom:92px;z-index:var(--z-card);display:flex;gap:var(--sp-2)}
+.act{flex:1;background:var(--glass-bg);border:2px solid var(--paper);border-radius:var(--r-md);padding:var(--sp-2) var(--sp-2);text-align:center;cursor:pointer;box-shadow:var(--sh-pop)}
+.act:active{transform:scale(.96)}
+.act svg{width:22px;height:22px;display:block;margin:0 auto 2px}
+.act b{font-size:var(--fs-sm);color:var(--ink-plant);display:block}
+.act small{font-size:var(--fs-2xs);color:var(--ink-soft)}
+.act.live{border-color:var(--sun-400);background:var(--sun-50)}
+
+.dock{position:absolute;left:0;right:0;bottom:0;z-index:var(--z-dock);padding:0 var(--sp-3) var(--sp-4);display:flex;justify-content:space-between;align-items:flex-end}
+.pill-tabs{display:flex;gap:3px;background:var(--glass-chip);backdrop-filter:blur(8px);border:1px solid var(--glass-chip-line);border-radius:var(--r-full);padding:var(--sp-1)}
+.pill-tabs button{border:0;background:transparent;color:var(--glass-txt);font-size:var(--fs-sm);font-weight:var(--fw-bold);padding:var(--sp-2) var(--sp-3);border-radius:var(--r-full);cursor:pointer;display:flex;align-items:center;gap:5px}
+.pill-tabs button.on{background:var(--paper);color:var(--ink-plant)}
+.pill-tabs svg{width:16px;height:16px}
+.cam-fab{width:68px;height:68px;border-radius:var(--r-round);border:3px solid var(--paper);cursor:pointer;background:radial-gradient(circle at 32% 28%,var(--sun-glow),var(--sun-400) 55%,var(--sun-600));box-shadow:var(--sh-float);display:grid;place-items:center;margin-bottom:var(--sp-1)}
+.cam-fab:active{transform:scale(.94)}
+.cam-fab svg{width:30px;height:30px}
+
+.choose-bg{position:absolute;inset:0;background:linear-gradient(180deg,#bfe6f7 0%,#d9f2e4 46%,#e8f7e2 74%,#8fd08a 100%);pointer-events:none}
+/* 参考稿的天空云朵 */
+.choose-cloud{position:absolute;top:58px;right:-30px;width:150px;height:44px;border-radius:999px;
+  background:linear-gradient(180deg,#fff,#f0f7fc);box-shadow:inset 0 -10px 14px rgba(185,212,232,.55);pointer-events:none;z-index:0}
+.choose-cloud:before,.choose-cloud:after{content:"";position:absolute;background:#fff;border-radius:999px}
+.choose-cloud:before{width:54%;aspect-ratio:1;top:-58%;left:15%}
+.choose-cloud:after{width:38%;aspect-ratio:1;top:-32%;right:13%}
+.choose-hd{padding:var(--sp-7) var(--sp-7) 0;position:relative;z-index:10}
+.choose-h1{font-family:var(--font-disp);font-size:var(--fs-6xl);font-weight:400;color:var(--ink);line-height:1.12}
+.choose-h1 b{display:block;font-weight:var(--fw-black)}
+.choose-quote{position:relative;z-index:10;text-align:center;font-size:var(--fs-base);font-style:italic;font-weight:var(--fw-semibold);color:var(--green-900);line-height:1.7;padding:var(--sp-4) var(--sp-9) 0;pointer-events:none}
+/* 选择页轮播：与参考稿一致（300px 卡片 + ±10° 侧卡 + 循环滑动） */
+.choose-carousel{flex:1;display:flex;flex-direction:column;justify-content:center;overflow:hidden;position:relative;z-index:8;padding-top:30px;touch-action:pan-y;cursor:grab;user-select:none}
+.choose-carousel:active{cursor:grabbing}
+.choose-track{display:flex;gap:16px;padding:12px 0 20px;transition:transform .38s cubic-bezier(.32,.72,0,1);will-change:transform}
+.choose-card{width:300px;flex-shrink:0;background:#fff;border-radius:30px;border:4px solid #fff;
+  box-shadow:0 0 0 2px rgba(46,125,50,.30),0 18px 48px rgba(0,0,0,.18);cursor:pointer;transition:transform .38s ease,opacity .38s ease;position:relative}
+.choose-card.active{transform:scale(1) rotate(0deg);opacity:1;z-index:3}
+/* 选中卡片光晕（参考稿的暖黄背光） */
+.choose-card.active:before{content:"";position:absolute;inset:-14px;border-radius:36px;z-index:-1;
+  background:radial-gradient(circle at 50% 45%,rgba(255,216,77,.5),rgba(255,216,77,0) 70%)}
+.choose-card.side-left{transform:scale(.8) rotate(10deg);opacity:.72;z-index:1;transform-origin:right center}
+.choose-card.side-right{transform:scale(.8) rotate(-10deg);opacity:.72;z-index:1;transform-origin:left center}
+/* 图像区：圆角方框 + 白描边 + 顶部浅蓝紫渐变 + 圆形内框 + 草花纹理带 */
+.choose-card-img{width:calc(100% - 28px);height:clamp(150px,19vh,180px);margin:14px 14px 0;border-radius:22px;overflow:hidden;position:relative;
+  background:linear-gradient(180deg,#dfe4fb 0%,#cdeef6 52%,#dff6e6 100%);
+  border:3px solid #fff;box-shadow:inset 0 0 0 2px rgba(46,125,50,.16)}
+/* 圆形内框：植物贴纸放在圆框里 */
+.choose-ring{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);width:72%;aspect-ratio:1;border-radius:50%;
+  border:3px solid #fff;box-shadow:0 0 0 2px rgba(46,125,50,.16),inset 0 0 0 2px rgba(46,125,50,.10);
+  background:radial-gradient(circle,rgba(255,255,255,.55),rgba(255,255,255,.10));display:grid;place-items:center}
+.choose-ring .sticker{position:static;width:100%;height:100%;display:grid;place-items:center}
+/* 贴纸白边：四向 drop-shadow 叠出实心白描边（依赖素材透明通道），再加柔和投影 */
+.choose-card-img .sticker img,.choose-card-img .sticker svg{width:76%;height:auto;max-height:96%;object-fit:contain;display:block;
+  filter:drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(0 2px 0 #fff) drop-shadow(0 -2px 0 #fff) drop-shadow(0 6px 10px rgba(0,0,0,.16))}
+/* 底部草地 + 小白花 / 粉花纹理 */
+.choose-grass{position:absolute;left:0;right:0;bottom:0;height:30px;background:linear-gradient(180deg,#9ed794,#8fd08a)}
+.choose-grass:before{content:"";position:absolute;left:0;right:0;top:-8px;height:9px;
+  background:repeating-linear-gradient(90deg,#8fd08a 0 7px,transparent 7px 14px)}
+.choose-grass:after{content:"";position:absolute;left:0;right:0;bottom:0;height:12px;background:#7cbf77}
+.choose-grass i{position:absolute;bottom:9px;width:7px;height:7px;border-radius:50%;background:#fff;box-shadow:0 0 0 1px rgba(255,255,255,.7)}
+.choose-grass i.p{background:#ffb3c6}
+.choose-grass i.f{width:11px;height:11px;border-radius:50%;
+  background:radial-gradient(circle,#ffd166 0 2.6px,#fff 2.8px 5.2px,transparent 5.4px)}
+.choose-card-body{padding:13px 18px 16px;display:flex;flex-direction:column;align-items:center;gap:5px}
+.choose-card-name{font-family:var(--font-disp);font-size:24px;font-weight:800;color:#1e7a39;letter-spacing:-.5px;text-align:center}
+.choose-card-rar{font-size:13px;color:#9aa89e;font-style:italic;font-weight:600;margin-top:-2px}
+.choose-card-desc{font-size:13px;color:#9aa89e;line-height:1.55;text-align:center;margin-top:2px}
+.choose-card-leaf{display:inline-flex;width:18px;height:18px;margin-left:5px;vertical-align:-3px}
+.choose-card-leaf svg{width:100%;height:100%}
+/* CTA：绿色渐变胶囊，模拟 3D 凸起（顶部高光 + 底部厚度 + 按压位移） */
+.choose-card-cta{margin-top:6px;width:100%;background:linear-gradient(180deg,#4cc257,#2ea44f 55%,#24934a);border-radius:50px;
+  padding:13px 20px;display:flex;align-items:center;justify-content:center;gap:10px;font-size:15px;font-weight:800;color:#fff;cursor:pointer;
+  text-shadow:0 1px 2px rgba(0,0,0,.25);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.4),inset 0 -3px 0 rgba(0,0,0,.22),0 5px 0 #17662e,0 9px 16px rgba(30,122,57,.38);
+  transition:transform .12s,box-shadow .12s}
+.choose-card-cta:active{transform:translateY(4px);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.35),inset 0 -2px 0 rgba(0,0,0,.18),0 1px 0 #17662e,0 3px 8px rgba(30,122,57,.3)}
+.choose-cta-icon{width:26px;height:26px;border-radius:var(--r-round);background:rgba(255,255,255,.22);display:grid;place-items:center;flex-shrink:0}
+.choose-dots{display:flex;align-items:center;justify-content:center;gap:8px;padding:0 0 22px;flex-shrink:0;position:relative;z-index:10}
+/* 选花盘页 */
+.pot-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:10px 18px 0;overflow:auto;position:relative;z-index:8}
+.pot-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;width:100%;max-width:360px}
+.pot-card{background:var(--paper);border-radius:20px;border:3px solid #f3f7f2;box-shadow:0 12px 30px rgba(0,0,0,.14);padding:14px 8px 12px;display:flex;flex-direction:column;align-items:center;gap:4px;position:relative;cursor:pointer;transition:transform .15s,border-color .15s}
+.pot-card.on{border-color:var(--green-500);box-shadow:0 12px 30px rgba(46,164,79,.3)}
+.pot-card:active{transform:scale(.97)}
+.pot-ico{width:64px;height:54px}
+.pot-ico svg{width:100%;height:100%}
+.pot-name{font-size:14px;font-weight:800;color:#1e7a39;text-align:center}
+.pot-rar{font-size:11px;color:#9aa89e;font-style:italic}
+.pot-card.lock{filter:grayscale(.8);opacity:.7}
+.lock-mask{position:absolute;inset:0;display:grid;place-items:center;border-radius:17px;background:rgba(255,255,255,.62);font-size:12px;font-weight:800;color:#5a6b5f}
+/* 主页植物底部花盘层 */
+.pot-layer{position:absolute;left:50%;bottom:118px;transform:translateX(-50%);width:160px;height:130px;z-index:9;pointer-events:none}
+.pot-layer svg{width:100%;height:100%;filter:drop-shadow(0 8px 14px rgba(0,0,0,.22))}
+/* 图鉴内花盘预览 */
+.pot-mini{width:88px;height:72px;margin:2px 0}
+.pot-mini svg{width:100%;height:100%}
+.choose-dot{height:8px;border-radius:4px;background:rgba(18,58,31,.22);transition:all .3s ease;cursor:pointer;border:0;padding:0}
+.choose-dot.active{width:24px;background:#2ea44f}
+.choose-dot:not(.active){width:8px}
+
+/* 二级页：与主页同一套清新绿调（渐变天幕 + 底部草地），不再是纯黄底 */
+.sub{position:absolute;inset:0;z-index:var(--z-page);display:none;flex-direction:column;
+  background:linear-gradient(180deg,var(--sky-mid) 0%,#cfeedf 42%,var(--mint-200) 72%,var(--leaf-mid) 100%)}
+.sub.on{display:flex}
+.sub-hd{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-4) var(--sp-4) var(--sp-2)}
+.sub-hd h2{font-family:var(--font-disp);font-size:var(--fs-4xl);font-weight:var(--fw-black);color:var(--ink);text-shadow:0 1px 0 rgba(255,255,255,.55)}
+.sub-hd .sub-sub{font-size:var(--fs-sm);color:var(--green-900);opacity:.75}
+.back{width:36px;height:36px;border-radius:var(--r-round);background:rgba(255,255,255,.9);border:2px solid var(--paper);display:grid;place-items:center;cursor:pointer;box-shadow:var(--sh-soft)}
+.back{width:36px;height:36px;border-radius:var(--r-round);background:var(--paper);border:2px solid var(--line);display:grid;place-items:center;cursor:pointer}
+.body{flex:1;overflow-y:auto;padding:0 var(--sp-4) var(--sp-6)}
+.card{background:rgba(255,255,255,.93);border-radius:var(--r-xl);padding:var(--sp-4);margin-bottom:var(--sp-3);box-shadow:var(--sh-card);border:2px solid rgba(255,255,255,.7)}
+.card-hd{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);margin-bottom:var(--sp-2)}
+.card-hd h3{margin-bottom:0}
+.card-hd .cnt{font-size:var(--fs-xs);color:var(--c-text-muted);background:var(--green-50);border-radius:var(--r-full);padding:2px var(--sp-2)}
+.card h3{font-size:var(--fs-lg);margin-bottom:var(--sp-2);color:var(--green-900);font-weight:var(--fw-black)}
+.muted{font-size:var(--fs-md);color:var(--c-text-muted);line-height:1.55}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3)}
+.gift-card{background:var(--paper);border:2px solid var(--rose-200);border-radius:var(--r-lg);padding:var(--sp-3);box-shadow:var(--sh-soft)}
+.gift-card .cd{font-family:var(--font-disp);font-size:var(--fs-2xl);font-weight:var(--fw-black);color:var(--ink)}
+.gift-card .cd small{font-size:var(--fs-md);font-weight:var(--fw-semibold);color:var(--muted)}
+.gift-card .bar{height:6px;border-radius:var(--r-xs);background:var(--fill);margin:var(--sp-2) 0;overflow:hidden}
+.gift-card .bar i{display:block;height:100%;background:var(--rose-500);width:40%}
+.gift-card .ico-row{display:flex;justify-content:space-between;align-items:center;margin-top:var(--sp-1)}
+.gift-card .ico-row svg{width:32px;height:32px}
+.sp-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3)}
+.sp{background:var(--paper);border-radius:var(--r-lg);padding:var(--sp-3);text-align:center;box-shadow:var(--sh-soft);border:2px solid var(--paper);cursor:pointer}
+.sp.on{border-color:var(--green-500)}
+.sp .ico{width:64px;height:64px;margin:0 auto var(--sp-2);border-radius:var(--r-lg);background:var(--green-100);display:grid;place-items:center}
+.sp .ico svg{width:38px;height:38px}
+.tag-r{display:inline-block;background:var(--ink);color:var(--c-on-dark);font-size:var(--fs-xs);font-weight:var(--fw-bold);border-radius:var(--r-full);padding:2px var(--sp-1);margin-top:var(--sp-1)}
+.tag-ok{display:inline-block;background:var(--green-100);color:var(--green-900);font-size:var(--fs-xs);font-weight:var(--fw-bold);border-radius:var(--r-full);padding:2px var(--sp-1);margin-top:var(--sp-1)}
+.tag-cur{display:inline-block;background:var(--green-500);color:var(--c-on-dark);font-size:var(--fs-xs);font-weight:var(--fw-black);border-radius:var(--r-full);padding:2px var(--sp-1);margin-top:var(--sp-1)}
+/* 图鉴顶部总览卡 */
+.coll-hero{display:flex;align-items:center;gap:var(--sp-3);background:linear-gradient(135deg,#fff 0%,var(--mint-200) 100%);border-radius:var(--r-xl);padding:var(--sp-3) var(--sp-4);margin-bottom:var(--sp-3);box-shadow:var(--sh-card);border:2px solid rgba(255,255,255,.75)}
+.coll-hero .ch-ico{width:62px;height:62px;flex-shrink:0;border-radius:var(--r-lg);background:var(--paper);display:grid;place-items:center;box-shadow:var(--sh-soft)}
+.coll-hero .ch-ico svg{width:36px;height:36px}
+.coll-hero .ch-main{flex:1;min-width:0}
+.coll-hero .ch-name{font-family:var(--font-disp);font-size:var(--fs-2xl);font-weight:var(--fw-black);color:var(--ink);line-height:1.15}
+.coll-hero .ch-name small{font-size:var(--fs-xs);color:var(--c-text-muted);margin-left:var(--sp-1);font-weight:var(--fw-semibold)}
+.coll-hero .ch-stage{font-size:var(--fs-sm);color:var(--green-900);margin-top:2px}
+.coll-hero .ch-bar{height:7px;border-radius:var(--r-xs);background:rgba(255,255,255,.75);overflow:hidden;margin:var(--sp-2) 0 var(--sp-1)}
+.coll-hero .ch-bar i{display:block;height:100%;border-radius:var(--r-xs);background:linear-gradient(90deg,var(--green-200),var(--green-600))}
+.coll-hero .ch-num{font-size:var(--fs-xs);color:var(--c-text-muted)}
+.coll-hero .ch-side{text-align:center;flex-shrink:0;padding-left:var(--sp-2);border-left:1.5px dashed rgba(0,0,0,.12)}
+.coll-hero .ch-cnt b{font-family:var(--font-disp);font-size:var(--fs-3xl);font-weight:var(--fw-black);color:var(--green-700)}
+.coll-hero .ch-cnt span{font-size:var(--fs-sm);color:var(--c-text-muted)}
+.coll-hero .ch-lbl{font-size:var(--fs-xs);color:var(--c-text-muted)}
+.sp.lock{opacity:.62}
+.sp.lock .ico{background:var(--fill)}
+.btn{display:block;width:100%;padding:var(--sp-4);border:0;border-radius:var(--r-md);font-weight:var(--fw-black);font-size:var(--fs-xl);cursor:pointer;background:linear-gradient(135deg,var(--green-400),var(--green-700));color:var(--c-on-dark);box-shadow:var(--sh-btn)}
+.btn.ghost{background:var(--paper);color:var(--ink);box-shadow:var(--sh-pop)}
+.btn.dark{background:var(--ink);color:var(--c-on-dark);border-radius:var(--r-full);display:flex;align-items:center;justify-content:center;gap:var(--sp-3)}
+.field{margin-top:var(--sp-2)}
+.field label{font-size:var(--fs-sm);color:var(--c-text-muted);display:block;margin-bottom:var(--sp-1)}
+.field input,.field select{width:100%;background:var(--paper);border:2px solid var(--paper);border-radius:var(--r-sm);padding:var(--sp-3);font-size:var(--fs-base)}
+.e4{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--sp-2);margin-top:var(--sp-2)}
+.e4 div{background:var(--green-50);border-radius:var(--r-md);padding:var(--sp-2) var(--sp-1);text-align:center}
+.e4 .n{font-weight:var(--fw-black);color:var(--green-900)}
+.e4 .l{font-size:var(--fs-xs);color:var(--c-text-muted)}
+.postcard{margin:var(--sp-3) 0;border-radius:var(--r-lg);overflow:hidden;border:6px solid var(--paper);box-shadow:var(--sh-post);background:linear-gradient(160deg,var(--sky-300),var(--mint-200) 40%,var(--leaf-mid));aspect-ratio:4/3;position:relative}
+.postcard .ph{position:absolute;inset:var(--sp-3) var(--sp-3) 38% var(--sp-3);border-radius:var(--r-sm);background:var(--glass-photo);display:grid;place-items:center;font-size:var(--fs-sm);color:var(--muted);overflow:hidden}
+.postcard .ph img{width:100%;height:100%;object-fit:cover}
+.postcard .cap{position:absolute;left:0;right:0;bottom:var(--sp-3);text-align:center;font-weight:var(--fw-black);color:var(--ink);font-size:var(--fs-base)}
+.gifts{display:flex;gap:var(--sp-2)}
+.gift{flex:1;background:var(--paper);border:2px solid var(--rose-200);border-radius:var(--r-md);padding:var(--sp-3);text-align:center;cursor:pointer}
+.gift.on{border-color:var(--rose-500);background:var(--rose-50)}
+.gift b{font-size:var(--fs-md);display:block;margin-top:var(--sp-1)}
+.gift svg{width:26px;height:26px;margin:0 auto}
+/* ---------- 深呼吸引导（Apple Watch 式扩散光环，围绕植物不遮挡） ---------- */
+.breathe{position:absolute;inset:0;z-index:var(--z-hud);pointer-events:none;opacity:0;transition:opacity .5s ease;
+  display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:118px 0 190px}
+.breathe.on{opacity:1}
+.breathe .br-ring{position:absolute;border-radius:var(--r-round);border:2px solid rgba(255,255,255,.85);
+  box-shadow:0 0 22px rgba(255,255,255,.55),inset 0 0 18px rgba(255,255,255,.35);will-change:transform,opacity}
+.breathe .br-ring.r1{background:radial-gradient(circle,rgba(255,255,255,.06),rgba(255,255,255,.16))}
+.breathe .br-ring.r2,.breathe .br-ring.r3{background:none;border-color:rgba(255,255,255,.5)}
+.breathe .br-tip{text-align:center;transform:translateY(-6px);transition:transform .6s ease}
+.breathe .br-tip b{display:block;font-family:var(--font-disp);font-size:var(--fs-2xl);font-weight:var(--fw-black);color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.35)}
+.breathe .br-tip span{display:block;font-size:var(--fs-sm);color:rgba(255,255,255,.9);margin-top:2px;text-shadow:0 1px 6px rgba(0,0,0,.35)}
+.breathe .br-stop{pointer-events:auto;background:rgba(255,255,255,.92);color:var(--ink);
+  border:0;border-radius:var(--r-full);padding:var(--sp-2) var(--sp-5);font-size:var(--fs-base);font-weight:var(--fw-bold);box-shadow:var(--sh-pop);cursor:pointer}
+.breathe .br-stop:active{transform:scale(.95)}
+
+/* ---------- 日记时间轴 ---------- */
+.tl{position:relative;padding-left:26px}
+.tl:before{content:"";position:absolute;left:9px;top:6px;bottom:6px;width:2px;background:linear-gradient(180deg,var(--green-200),var(--mint-200));border-radius:2px}
+.tl-day{position:relative;margin-bottom:var(--sp-1);font-size:var(--fs-sm);font-weight:var(--fw-bold);color:var(--green-900)}
+.tl-day:before{content:"";position:absolute;left:-21px;top:6px;width:10px;height:10px;border-radius:var(--r-round);background:var(--green-500);box-shadow:0 0 0 3px var(--green-50)}
+.tl-item{position:relative;margin-bottom:var(--sp-2)}
+.tl-item:last-child{margin-bottom:0}
+.tl-node{position:absolute;left:-21px;top:14px;width:12px;height:12px;border-radius:var(--r-round);background:var(--paper);border:3px solid var(--green-400)}
+.tl-item.tl-photo .tl-node{border-color:var(--rose-400)}
+.tl-item.tl-sun .tl-node{border-color:var(--sun-400)}
+.tl-body{background:var(--green-50);border-radius:var(--r-md);padding:var(--sp-2) var(--sp-3);border:1.5px solid rgba(255,255,255,.8)}
+.tl-top{display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-2)}
+.tl-time{font-size:var(--fs-xs);color:var(--c-text-muted);font-variant-numeric:tabular-nums}
+.tl-gain{font-size:var(--fs-sm);font-weight:var(--fw-black);color:var(--green-600)}
+.tl-name{font-size:var(--fs-base);font-weight:var(--fw-bold);color:var(--ink);margin-top:1px}
+.tl-meta{font-size:var(--fs-xs);color:var(--c-text-muted);margin-top:2px}
+.tl-empty{text-align:center;color:var(--c-text-muted);font-size:var(--fs-md);padding:var(--sp-4) 0}
+
+/* ---------- 快捷卡编辑（同步页） ---------- */
+.act-edit{display:flex;align-items:center;gap:var(--sp-2);background:var(--green-50);border-radius:var(--r-md);padding:var(--sp-2) var(--sp-3);margin-bottom:var(--sp-2);border:1.5px solid rgba(255,255,255,.8)}
+.act-edit .ae-ico{width:34px;height:34px;border-radius:var(--r-sm);background:var(--paper);display:grid;place-items:center;flex-shrink:0}
+.act-edit .ae-ico svg{width:20px;height:20px}
+.act-edit .ae-txt{flex:1;min-width:0}
+.act-edit .ae-txt b{display:block;font-size:var(--fs-base)}
+.act-edit .ae-txt span{font-size:var(--fs-xs);color:var(--c-text-muted)}
+.act-edit .ae-btn{border:0;background:var(--paper);border-radius:var(--r-full);padding:var(--sp-1) var(--sp-2);font-size:var(--fs-xs);cursor:pointer;box-shadow:var(--sh-soft)}
+.act-edit .ae-btn:active{transform:scale(.94)}
+.act-edit .ae-btn.del{color:var(--rose-500)}
+.act-cap{font-size:var(--fs-sm);color:var(--c-text-muted);margin-bottom:var(--sp-2)}
+
+.pair{display:flex;gap:var(--sp-3);align-items:center;background:var(--paper);border-radius:var(--r-md);padding:var(--sp-3);margin-bottom:var(--sp-3);box-shadow:var(--sh-soft)}
+.pair .pico{width:48px;height:48px;border-radius:var(--r-md);background:var(--green-100);display:grid;place-items:center;flex-shrink:0}
+.pair .pico svg{width:28px;height:28px}
+.pair .ptxt{flex:1;min-width:0}
+.pair .ptxt b{font-size:var(--fs-base)}
+.pair .ptxt p{font-size:var(--fs-sm);color:var(--c-text-muted);margin-top:2px;line-height:1.4}
+.pair .go{background:var(--ink);color:var(--c-on-dark);border:0;border-radius:var(--r-full);padding:var(--sp-2) var(--sp-3);font-size:var(--fs-sm);font-weight:var(--fw-bold);cursor:pointer;white-space:nowrap}
+.rem{display:flex;justify-content:space-between;align-items:center;background:var(--paper);border-radius:var(--r-md);padding:var(--sp-3) var(--sp-3);margin:var(--sp-2) 0;box-shadow:var(--sh-flat)}
+.rem .rt{font-size:var(--fs-md)}
+.rem .rt b{color:var(--green-900)}
+.sw{width:44px;height:26px;border-radius:var(--r-full);background:var(--switch-off);position:relative;cursor:pointer;flex-shrink:0}
+.sw:after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:var(--r-round);background:var(--paper);transition:var(--dur-fast)}
+.sw.on{background:var(--green-400)}
+.sw.on:after{left:21px}
+.session{background:var(--sun-50);border:2px solid var(--sun-400);border-radius:var(--r-md);padding:var(--sp-3);margin-bottom:var(--sp-3)}
+.session .big{font-family:var(--font-disp);font-size:var(--fs-5xl);font-weight:var(--fw-black);color:var(--sun-800)}
+.sheet{position:absolute;inset:0;z-index:var(--z-sheet);background:var(--overlay);display:none;align-items:flex-end}
+.sheet.on{display:flex}
+.sheet-box{width:100%;background:var(--cream);border-radius:var(--r-xl) var(--r-xl) 0 0;padding:var(--sp-4) var(--sp-4) var(--sp-8);border-top:3px solid var(--paper)}
+.sheet-box h3{font-size:var(--fs-2xl);font-weight:var(--fw-black);margin-bottom:var(--sp-2)}
+.score-big{font-family:var(--font-disp);font-size:var(--fs-6xl);font-weight:var(--fw-black);color:var(--rose-500)}
+.toast{position:absolute;left:50%;bottom:120px;transform:translateX(-50%);z-index:var(--z-toast);background:var(--toast-bg);color:var(--c-on-dark);padding:var(--sp-3) var(--sp-4);border-radius:var(--r-md);font-size:var(--fs-base);opacity:0;transition:.25s;pointer-events:none;max-width:80%;text-align:center}
+.toast.on{opacity:1}
+input[type=file]{display:none}
+.hist{display:flex;justify-content:space-between;background:var(--paper);border-radius:var(--r-sm);padding:var(--sp-2) var(--sp-3);margin:var(--sp-2) 0;font-size:var(--fs-base);box-shadow:var(--sh-flat)}
+/* 我的页 */
+.prof{display:flex;align-items:center;gap:var(--sp-4)}
+.prof-ava{width:64px;height:64px;border-radius:var(--r-round);background:linear-gradient(160deg,var(--sky-300),var(--mint-200));display:grid;place-items:center;flex-shrink:0;border:3px solid var(--paper);box-shadow:var(--sh-soft)}
+.prof-ava svg{width:36px;height:36px}
+.prof-info{flex:1;min-width:0}
+.prof-info input{width:100%;border:0;border-bottom:2px dashed var(--line-cream);background:transparent;font-size:var(--fs-2xl);font-weight:var(--fw-black);color:var(--ink);padding:2px 0 var(--sp-1);font-family:var(--font-body)}
+.prof-info input:focus{outline:none;border-bottom-color:var(--green-400)}
+.dev{padding:0}
+.dev summary{list-style:none;cursor:pointer;font-size:var(--fs-base);font-weight:var(--fw-bold);color:var(--muted);padding:var(--sp-4)}
+.dev summary:before{content:'▸ '}
+.dev[open] summary:before{content:'▾ '}
+.dev summary::-webkit-details-marker{display:none}
+.dev .field,.dev .btn,.dev .muted{margin-left:var(--sp-4);margin-right:var(--sp-4);width:auto}
+.dev .muted{margin-bottom:var(--sp-3)}
+.dev .btn[style*="margin-top"]{margin-left:var(--sp-4);margin-right:var(--sp-4)}
+</style>
+</head>
+<body>
+<div class="chrome">光合作用 · Bloom v3 · 人植同步 + 提醒<br>目录 皮克敏bloom/ · 说明 PRODUCT_PLAN.md / SENSOR_RESEARCH.md</div>
+<div class="phone">
+<div class="notch"></div>
+<div class="screens">
+
+  <!-- 选择植物 -->
+  <section class="screen on" id="s-choose">
+    <div class="choose-bg"></div>
+    <div class="choose-cloud"></div>
+    <div class="status" style="color:var(--ink)"><span>9:41</span><span></span><div>100%</div></div>
+    <div class="choose-hd"><div class="choose-h1">挑选<b>你的植物伙伴</b></div></div>
+    <div class="choose-quote">每一次你朝着光走去，<br>我都比昨天又长高一点点。</div>
+    <div class="choose-carousel" id="car"><div class="choose-track" id="track"></div></div>
+    <div class="choose-dots" id="dots"></div>
+  </section>
+
+  <!-- 主页 -->
+  <section class="screen" id="s-home">
+    <div class="stage-pixel"></div>
+    <div class="env-layer" id="envLayer"></div>
+    <div class="px-cloud pc1"></div><div class="px-cloud pc2"></div><div class="px-cloud pc3"></div>
+    <div class="px-fly f1"><div class="w l"></div><div class="w r"></div></div>
+    <div class="px-fly f2"><div class="w l"></div><div class="w r"></div></div>
+    <div class="px-hill"></div><div class="px-grass"></div>
+    <div class="home-flora" aria-hidden="true"><svg viewBox="0 0 390 64" preserveAspectRatio="xMidYMax meet">
+      <defs>
+        <g id="grA" fill="none" stroke="#6dbb67" stroke-width="3" stroke-linecap="round">
+          <path d="M0 0C0 -10 -2 -17 -5 -24"/><path d="M5 0C5 -12 7 -19 10 -26"/><path d="M10 0C10 -8 12 -13 14 -18"/>
+        </g>
+        <g id="grB" fill="none" stroke="#8fd08a" stroke-width="3" stroke-linecap="round">
+          <path d="M0 0C0 -9 2 -15 5 -21"/><path d="M-5 0C-5 -11 -7 -16 -10 -22"/>
+        </g>
+        <g id="flW"><g fill="#fff"><circle cx="0" cy="-4.4" r="2.7"/><circle cx="4.2" cy="-1.4" r="2.7"/><circle cx="2.6" cy="3.6" r="2.7"/><circle cx="-2.6" cy="3.6" r="2.7"/><circle cx="-4.2" cy="-1.4" r="2.7"/></g><circle r="2" fill="#ffd166"/></g>
+        <g id="flP"><g fill="#ffb3c6"><circle cx="0" cy="-4.4" r="2.7"/><circle cx="4.2" cy="-1.4" r="2.7"/><circle cx="2.6" cy="3.6" r="2.7"/><circle cx="-2.6" cy="3.6" r="2.7"/><circle cx="-4.2" cy="-1.4" r="2.7"/></g><circle r="2" fill="#ff8fa3"/></g>
+      </defs>
+      <use href="#grA" x="18" y="60"/><use href="#grB" x="40" y="62"/><use href="#flW" x="58" y="56"/>
+      <use href="#grA" x="86" y="61"/><use href="#grB" x="112" y="60"/><use href="#flP" x="134" y="57"/>
+      <use href="#grB" x="160" y="62"/><use href="#grA" x="186" y="60"/><use href="#flW" x="210" y="56"/>
+      <use href="#grA" x="238" y="61"/><use href="#grB" x="264" y="62"/><use href="#flP" x="286" y="57"/>
+      <use href="#grB" x="312" y="60"/><use href="#grA" x="338" y="61"/><use href="#flW" x="364" y="57"/>
+    </svg></div>
+    <div class="status"><span>9:41</span><div>光合作用 · 100%</div></div>
+    <div class="home-hd">
+      <div>
+        <div class="home-title" id="plantEn">Strawberry</div>
+        <div class="home-sub" id="plantSt">SEEDLING</div>
+      </div>
+      <div class="top-right">
+        <div class="avatar-btn" onclick="openSub('s-profile')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#0c3318" stroke-width="2"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1.5-4 12.5-4 14 0"/></svg>
+        </div>
+      </div>
+    </div>
+    <div class="bubble-wrap">
+      <div class="bubble" id="bubble" onclick="nextChat()"><span id="bubbleTxt">拍一张自然场景，帮我长大吧</span></div>
+      <button class="bubble-ack" id="bubbleAck" onclick="ackChat()" aria-label="知道了"></button>
+    </div>
+    <div class="plant-wrap"><canvas id="plant3d"></canvas></div>
+    <div class="pot-layer" id="potLayer"></div>
+    <div class="env-tint" id="envTint"></div>
+    <div class="env-fx" id="envFx"></div>
+    <div class="breathe" id="breathe">
+      <div class="br-ring r1"></div><div class="br-ring r2"></div><div class="br-ring r3"></div>
+      <div class="br-tip"><b id="brWord">吸气</b><span id="brCount">第 1 / 3 次</span></div>
+      <button class="br-stop" onclick="stopBreathe()">结束</button>
+    </div>
+    <div class="tap-hand" id="tapHand"><svg viewBox="0 0 338 346" fill="none">
+      <path d="M78.432 108.3C82.5654 104.696 87.9609 102.882 93.4316 103.257C98.8483 103.628 103.898 106.116 107.496 110.177L129.222 131.383C129.658 129.799 130.283 128.263 131.091 126.811C133.251 122.93 136.603 119.848 140.651 118.021C144.699 116.193 149.228 115.717 153.567 116.664C156.022 117.2 158.342 118.176 160.423 119.528C160.86 117.87 161.505 116.264 162.348 114.747C164.508 110.867 167.86 107.784 171.908 105.956C175.956 104.129 180.485 103.654 184.824 104.6C189.163 105.547 193.082 107.866 196.001 111.213L198.606 114.202C199.505 110.178 201.555 106.664 205.086 103.909L205.69 103.455L205.693 103.453C209.131 100.978 214.356 99.8219 219.267 100.2C224.231 100.583 229.702 102.609 232.986 107.488L233.033 107.56L271.373 167.718L271.604 168.081L271.741 168.489C279.148 190.625 270.024 218.415 248.218 237.425C226.651 256.228 198.269 261.568 177.409 251.663L122.025 249.542L121.976 249.54C119.237 249.397 116.553 248.711 114.081 247.52C111.609 246.329 109.399 244.658 107.579 242.605C105.759 240.552 104.366 238.157 103.482 235.56C102.597 232.963 102.237 230.216 102.424 227.479C102.612 224.741 103.343 222.069 104.573 219.617C105.804 217.165 107.511 214.982 109.593 213.196C111.676 211.41 114.093 210.056 116.704 209.213C119.297 208.377 122.03 208.062 124.745 208.285L124.746 208.284L142.976 209.538L76.5002 137.547L76.4668 137.51L76.434 137.473C72.8304 133.339 71.0158 127.943 71.3905 122.472C71.7652 117.001 74.2985 111.903 78.432 108.3Z" fill="white" fill-opacity="0.44" stroke="white" stroke-width="7"/>
+    </svg></div>
+    <div class="sun-badge" id="sunBadge" onclick="openSub('s-sync')">
+      <div class="ring"></div>
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="5" fill="#fff"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2" stroke="#fff" stroke-width="2"/></svg>
+      <div class="t" id="sunTime">00:00</div>
+    </div>
+    <div class="env-ask" id="envAsk">
+      <div class="box">
+        <p id="envAskTxt">看起来您这边是下雨了，需要将植物的生长环境也变为雨天吗？</p>
+        <div class="row"><button class="yes" onclick="envYes()">是的</button><button class="no" onclick="envNo()">先不用</button></div>
+      </div>
+    </div>
+    <div class="home-foot">
+      <div class="hf-row">
+        <div class="today-box">
+          <div class="t1">今日拍摄</div>
+          <div class="t2"><span id="tdN">0</span> / 3</div>
+        </div>
+        <div class="prog-side">
+          <div class="prog-top"><span id="stageName">种子</span></div>
+        </div>
+      </div>
+      <div class="stage-dots" id="stageDots"></div>
+      <div class="stage-next-tip" id="stageNext"></div>
+    </div>
+    <div class="act-row" id="actRow"></div>
+    <div class="walk-state" id="walkState">
+      <div class="ws-ico"><svg viewBox="0 0 24 24" fill="none"><path d="M13 5a2 2 0 11-4 0 2 2 0 014 0z" fill="#3d9a55"/><path d="M12 8l-1 5 3 3v5M11 13l-3 4" stroke="#3d9a55" stroke-width="2" stroke-linecap="round"/></svg></div>
+      <div class="ws-txt"><b>散步中</b><p>正在记录步数与时长</p></div>
+      <div class="ws-time" id="walkTime">00:00</div>
+      <button class="ws-end" onclick="toggleWalk()">结束</button>
+    </div>
+    <div class="dock">
+      <div class="pill-tabs">
+        <button class="on" onclick="show('s-home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 11l8-7 8 7v9H4z"/></svg>主页</button>
+        <button onclick="openSub('s-collection')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M3 8l2-4h14l2 4"/></svg>图鉴</button>
+        <button onclick="openSub('s-sync')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>同步</button>
+        <button onclick="openSub('s-diary')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 2v4M16 2v4M4 10h16"/></svg>日记</button>
+      </div>
+      <div class="cam-fab" onclick="openCamera()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.6"/></svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- 同步与提醒 -->
+  <section class="sub" id="s-sync">
+    <div class="sub-hd"><div class="back" onclick="closeSub()">←</div><div><h2>同步与提醒</h2><div class="sub-sub">管理首页快捷卡片与提醒时刻</div></div></div>
+    <div class="body">
+      <div class="card">
+        <div class="card-hd"><h3>首页快捷卡片</h3><span class="cnt" id="actCap"></span></div>
+        <div class="act-cap">默认提供晒太阳 / 喝水 / 散步，可添加自己的活动；勾选后显示在主页，最多 6 张。</div>
+        <div id="homeActList"></div>
+        <button class="btn ghost" style="margin-top:10px" onclick="addCustomAct()">+ 添加自定义活动</button>
+      </div>
+      <div class="card">
+        <h3>提醒督促</h3>
+        <div class="muted" style="margin-bottom:8px">植物主动 + 你自定时刻；通知可关。</div>
+        <div id="remList"></div>
+        <button class="btn ghost" style="margin-top:10px" onclick="addReminder()">+ 添加自定提醒</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 图鉴 -->
+  <section class="sub" id="s-collection">
+    <div class="sub-hd"><div class="back" onclick="closeSub()">←</div><div><h2>图鉴</h2><div class="sub-sub">已经收集到的伙伴与成长进度</div></div></div>
+    <div class="body">
+      <div class="coll-hero" id="collHero"></div>
+      <div class="card"><h3>花苗和水果</h3><div class="grid2" id="giftGrid"></div></div>
+      <div class="card">
+        <div class="card-hd"><h3>物种图鉴</h3><span class="cnt" id="collCnt"></span></div>
+        <div class="sp-grid" id="collGrid"></div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><h3>我的花盘</h3><span class="cnt" id="potCur"></span></div>
+        <div class="pot-mini" id="potMini"></div>
+        <button class="btn ghost" style="margin-top:10px" onclick="openPot('change')">更换花盘</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 选花盘 -->
+  <section class="screen" id="s-pot">
+    <div class="choose-bg"></div>
+    <div class="status" style="color:var(--ink)"><span>9:41</span><span></span><div>100%</div></div>
+    <div class="choose-hd"><div class="choose-h1">挑个<b>花盘</b></div></div>
+    <div class="choose-quote">给 <span id="potPlant">伙伴</span> 挑一个舒服的小家</div>
+    <div class="pot-wrap"><div class="pot-grid" id="potGrid"></div></div>
+    <div class="choose-dots" style="gap:14px"><button class="btn ghost" onclick="closePot()">返回</button></div>
+  </section>
+
+  <!-- 日记 -->
+  <section class="sub" id="s-diary">
+    <div class="sub-hd"><div class="back" onclick="closeSub()">←</div><div><h2>养成日记</h2><div class="sub-sub">每一次陪伴，都被记下来</div></div></div>
+    <div class="body">
+      <div class="card"><h3>近 7 天四要素</h3>
+        <div class="e4">
+          <div><div class="n" id="sumL">0</div><div class="l">光</div></div>
+          <div><div class="n" id="sumW">0</div><div class="l">水</div></div>
+          <div><div class="n" id="sumA">0</div><div class="l">气</div></div>
+          <div><div class="n" id="sumB">0</div><div class="l">境</div></div>
+        </div>
+        <div class="muted" id="divTxt" style="margin-top:var(--sp-2)">四要素比较均衡</div>
+      </div>
+      <div class="card"><h3>今日活动加成</h3>
+        <div class="muted" id="bonusTxt">晒太阳 +0 · 喝水 +0 · 散步 +0</div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><h3>陪伴时间轴</h3><span class="cnt" id="histCnt"></span></div>
+        <div id="histList" class="tl"><div class="tl-empty">还没有记录</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 我的 -->
+  <section class="sub" id="s-profile">
+    <div class="sub-hd"><div class="back" onclick="closeSub()">←</div><h2>我的</h2></div>
+    <div class="body">
+      <div class="card prof">
+        <div class="prof-ava" id="profAva"></div>
+        <div class="prof-info">
+          <input id="nickIn" maxlength="12" spellcheck="false" onchange="saveNick()">
+          <div class="muted" id="profSub">今天也要一起晒太阳</div>
+        </div>
+      </div>
+      <div class="card"><h3>我的成长</h3>
+        <div class="e4">
+          <div><div class="n" id="pLvl">1</div><div class="l">等级</div></div>
+          <div><div class="n" id="pXp">0</div><div class="l">经验</div></div>
+          <div><div class="n" id="pTotal">0</div><div class="l">累计光合</div></div>
+          <div><div class="n" id="pBonus">0/12</div><div class="l">今日加成</div></div>
+        </div>
+      </div>
+      <div class="card"><h3>我的设备</h3>
+        <div id="devCard"></div>
+        <button class="btn ghost" style="margin-top:10px" onclick="openSub('s-device')">管理设备连接</button>
+      </div>
+      <div class="card"><h3>设置</h3>
+        <div class="pair" style="box-shadow:none;border:1px solid #f0efe8">
+          <div class="ptxt"><b>提醒督促</b><p>植物主动提醒与自定义时刻</p></div>
+          <button class="go" onclick="openSub('s-sync')">前往</button>
+        </div>
+        <div class="pair" style="box-shadow:none;border:1px solid #f0efe8;margin-bottom:0">
+          <div class="ptxt"><b>提示音效</b><p>浇水、结算等反馈音</p></div>
+          <div class="sw on" id="swSound" onclick="toggleSound()"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 设备连接引导 -->
+  <section class="sub" id="s-device">
+    <div class="sub-hd"><div class="back" onclick="closeSub()">←</div><h2>连接设备</h2></div>
+    <div class="body">
+      <div class="card"><h3>为什么要连接手表？</h3>
+        <div class="muted">连接后这些事会<b>自动同步</b>，不用手动打卡：<br>
+          · 「日光时间」→ 植物和你一起晒太阳，时长 1:1 同步<br>
+          · 「步数」→ 散步自动记录时长与步数<br>
+          · 「睡眠」→ 早睡打卡自动完成<br>
+          · 「饮水」→ 系统水分记录直接触发浇水动画<br>
+          不连接也可以随时用手动模式，完整体验所有玩法。</div>
+      </div>
+      <div class="card"><h3>选择你的设备</h3>
+        <div class="pair"><div class="pico" id="devIcoA"></div>
+          <div class="ptxt"><b>Apple Watch</b><p>日光时间 · 步数 · 睡眠 · 饮水（推荐）</p></div>
+          <button class="go" onclick="connectDev('apple')">连接</button></div>
+        <div class="pair"><div class="pico" id="devIcoH"></div>
+          <div class="ptxt"><b>华为手表 / 手环</b><p>步数 · 睡眠（暂无光照数据）</p></div>
+          <button class="go" onclick="connectDev('huawei')">连接</button></div>
+        <div class="pair"><div class="pico" id="devIcoM"></div>
+          <div class="ptxt"><b>小米 / Amazfit</b><p>步数（Zepp 接入）</p></div>
+          <button class="go" onclick="connectDev('mi')">连接</button></div>
+        <div class="pair"><div class="pico" id="devIcoN"></div>
+          <div class="ptxt"><b>暂不连接</b><p>使用手动模式，随时可以再来连接</p></div>
+          <button class="go" onclick="connectDev('none')">跳过</button></div>
+        <div class="muted" id="devState" style="margin-top:8px"></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="sheet" id="sheetScore"><div class="sheet-box">
+  <h3>光合结算</h3>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div class="score-big" id="scTotal">+0</div>
+      <div class="muted" id="scMode">模拟</div>
+    </div>
+    <div class="e4">
+      <div><div class="n" id="scL">0</div><div class="l">光</div></div>
+      <div><div class="n" id="scW">0</div><div class="l">水</div></div>
+      <div><div class="n" id="scA">0</div><div class="l">气</div></div>
+      <div><div class="n" id="scB">0</div><div class="l">境</div></div>
+    </div>
+    <div class="muted" id="scMeta" style="margin-top:8px"></div>
+  </div>
+  <button class="btn" onclick="closeSheet()">好的</button>
+</div></div>
+<div class="sheet" id="sheetReward"><div class="sheet-box">
+  <h3>成熟收获</h3>
+  <div class="postcard">
+    <div class="ph" id="pcPh">你的自然照片</div>
+    <div class="cap">我的草莓 · 光合作用纪念</div>
+  </div>
+  <div class="gifts">
+    <div class="gift on"><svg viewBox="0 0 24 24" fill="none" stroke="#e85a6b" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/></svg><b>电子明信片</b></div>
+    <div class="gift"><svg viewBox="0 0 24 24" fill="none" stroke="#e85a6b" stroke-width="2"><path d="M3 6h18v12H3z"/><path d="M3 7l9 7 9-7"/></svg><b>实体明信片</b></div>
+    <div class="gift"><svg viewBox="0 0 24 24" fill="none" stroke="#e85a6b" stroke-width="2"><circle cx="12" cy="13" r="7"/><path d="M12 6c2-3 5-4 7-3"/></svg><b>时令水果</b></div>
+  </div>
+  <button class="btn" style="margin-top:10px" onclick="claim()">完成领取</button>
+</div></div>
+<div class="sheet" id="sheetCam"><div class="sheet-box">
+  <h3>拍摄自然场景</h3>
+  <div class="muted">用于 AI 识别光/水/气/境。</div>
+  <input type="file" id="photoInput" accept="image/*" capture="environment">
+  <button class="btn" style="margin-top:12px" onclick="document.getElementById('photoInput').click()">选择照片 / 相机</button>
+  <button class="btn ghost" style="margin-top:8px" onclick="mockTake()">模拟拍摄</button>
+  <button class="btn ghost" style="margin-top:8px" onclick="closeSheet()">取消</button>
+</div></div>
+<div class="sheet" id="sheetRem"><div class="sheet-box">
+  <h3>添加提醒</h3>
+  <div class="field"><label>做什么</label>
+    <select id="remKind"><option value="sun">晒太阳</option><option value="water">喝水</option><option value="walk">散步</option><option value="photo">拍照</option><option value="rest">休息/早睡</option></select>
+  </div>
+  <div class="field"><label>时间</label><input id="remTime" type="time" value="15:00"></div>
+  <div class="field"><label>重复</label>
+    <select id="remRep"><option value="daily">每天</option><option value="weekday">工作日</option></select>
+  </div>
+  <div class="field"><label>植物口吻文案（可改）</label><input id="remVoice" type="text" placeholder="一起去晒太阳吧"></div>
+  <button class="btn" style="margin-top:12px" onclick="saveReminder()">保存提醒</button>
+  <button class="btn ghost" style="margin-top:8px" onclick="closeSheet()">取消</button>
+</div></div>
+<div class="sheet" id="sheetAct"><div class="sheet-box">
+  <h3 id="sheetActTitle">添加自定义活动</h3>
+  <div class="field"><label>活动名称</label><input id="actName" type="text" placeholder="例如：拉伸 5 分钟"></div>
+  <div class="field"><label>图标</label>
+    <select id="actIcon">
+      <option value="leaf">叶子</option><option value="sun">太阳</option><option value="water">水滴</option>
+      <option value="walk">走路</option><option value="star">星星</option><option value="heart">爱心</option>
+    </select>
+  </div>
+  <div class="muted">添加后会显示在植物主页的快捷卡片中，可随时在「同步与提醒 → 首页快捷卡片」里调整。</div>
+  <button class="btn" style="margin-top:12px" onclick="saveCustomAct()">保存</button>
+  <button class="btn ghost" style="margin-top:8px" onclick="closeSheet()">取消</button>
+</div></div>
+<div class="toast" id="toast"></div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const toast=s=>{const e=$('toast');e.textContent=s;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),2400)};
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id));if(id==='s-home'){refresh();renderPot();applyEnv()}}
+function openSub(id){document.querySelectorAll('.sub').forEach(s=>s.classList.toggle('on',s.id===id));
+  if(id==='s-diary')renderDiary();if(id==='s-collection')renderColl();if(id==='s-profile')renderProfile();if(id==='s-sync'){renderRems();renderHomeActs()}if(id==='s-device')renderDevice()}
+function closeSub(){document.querySelectorAll('.sub').forEach(s=>s.classList.remove('on'))}
+function closeSheet(){document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('on'))}
+window.show=show;window.openSub=openSub;window.closeSub=closeSub;window.closeSheet=closeSheet;
+
+const KEY='ps_bloom_v3';
+const API_DEF={key:'sk-cnhlpporrcijeeaochswdicazcfqbqrgxpwazjtzlgzpnuvo',url:'https://api.siliconflow.cn/v1/chat/completions',model:'Qwen/Qwen2.5-VL-7B-Instruct'};
+const SP=[
+  {id:'strawberry',name:'闪闪凝珠莓',en:'Strawberry',coef:[1.2,1,1,.9],unlock:1,rare:false,img:'草莓渲染主图.png',desc:'新手友好，喝水就开心',leaves:1},
+  {id:'sunflower',name:'向阳小金轮',en:'Sunflower',coef:[1.3,1,1,.9],unlock:1,rare:false,desc:'最爱晒太阳，追着光长大',leaves:1},
+  {id:'cactus',name:'刺刺小守卫',en:'Cactus',coef:[1.1,.8,1.2,1.1],unlock:1,rare:false,desc:'耐得住忙碌与干燥',leaves:2},
+  {id:'succulent',name:'胖嘟嘟玉',en:'Succulent',coef:[1,.8,1.1,1.1],unlock:2,rare:false,desc:'圆滚滚，好养不娇气',leaves:1},
+  {id:'mint',name:'凉凉薄荷糖',en:'Mint',coef:[1.05,1.1,1,.95],unlock:2,rare:false,desc:'清新提神，越养越精神',leaves:1},
+  {id:'tomato',name:'红灯小甜胖',en:'Tomato',coef:[1.15,1.05,.95,1],unlock:3,rare:false,desc:'红透的时候最甜',leaves:1},
+  {id:'pine',name:'常青小哨兵',en:'Pine',coef:[.9,1.1,1.1,1.3],unlock:4,rare:false,desc:'四季常青，稳稳当当',leaves:2},
+  {id:'lavender',name:'紫雾安神铃',en:'Lavender',coef:[1.2,1,1.1,1],unlock:5,rare:true,desc:'稀有花草，安神又浪漫',leaves:1},
+  {id:'orange',name:'橘气小灯笼',en:'Orange',coef:[1.25,.95,1,.95],unlock:6,rare:true,desc:'稀有水果，挂满枝头',leaves:1},
+  {id:'blueberry',name:'蓝霜小宝石',en:'Blueberry',coef:[1.2,1.1,.95,1],unlock:7,rare:true,desc:'稀有浆果，颗颗饱满',leaves:1},
+  {id:'cherry',name:'樱红双生铃',en:'Cherry',coef:[1.25,1,1,.95],unlock:8,rare:true,desc:'稀有佳果，成双成对',leaves:1},
+  {id:'melon',name:'翠纹大肚瓜',en:'Melon',coef:[1.15,1.15,1,.9],unlock:9,rare:true,desc:'稀有瓜王，沙瓤清甜',leaves:2},
+];
+/* ---------- 花盘：与植物一样分普通 / 稀有，稀有需记录次数解锁；素材图后续替换 ---------- */
+const POTS=[
+  {id:'terracotta',name:'陶土小圆盆',en:'Terracotta',rare:false,unlock:1,color:'#d98b5f',desc:'最朴素的红陶盆，透气又亲切'},
+  {id:'ceramic',name:'釉白瓷盆',en:'Ceramic',rare:false,unlock:1,color:'#eef3f4',desc:'温润白瓷，干净利落'},
+  {id:'straw',name:'草编花篮',en:'Straw',rare:false,unlock:2,color:'#d9b574',desc:'自然草编，自带乡野气息'},
+  {id:'glass',name:'透亮玻璃盆',en:'Glass',rare:false,unlock:3,color:'#bfe6f2',desc:'看得见根系的魔法盆'},
+  {id:'gold',name:'鎏金雕花盆',en:'Gilded',rare:true,unlock:5,color:'#e8c25a',desc:'稀有金边，贵气十足'},
+  {id:'crystal',name:'星河水晶盆',en:'Crystal',rare:true,unlock:7,color:'#9bb8ff',desc:'稀有水晶，盛满星光'},
+  {id:'cloud',name:'云朵绒花盆',en:'Cloud',rare:true,unlock:9,color:'#dfe6ff',desc:'稀有云绒，软乎乎的可爱'},
+];
+const POT_OF=id=>POTS.find(p=>p.id===id)||POTS[0];
+const potLocked=p=>p.rare && S.total < p.unlock*15;
+function potSvg(id){const p=POT_OF(id);return `<svg viewBox="0 0 100 82">
+  <ellipse cx="50" cy="20" rx="40" ry="10" fill="${p.color}"/>
+  <path d="M10 20 Q50 34 90 20 L80 70 Q50 82 20 70 Z" fill="${p.color}" stroke="rgba(0,0,0,.12)" stroke-width="2"/>
+  <path d="M10 20 Q50 34 90 20 L86 30 Q50 42 14 30 Z" fill="rgba(255,255,255,.35)"/>
+</svg>`;}
+const FULL=300;
+const DAILY_BONUS_CAP=12;
+function load(){
+  try{const s=JSON.parse(localStorage.getItem(KEY)||'null');
+    if(s&&s.species){
+      if(!Array.isArray(s.homeActs))s.homeActs=['sun','water','walk'];
+      if(s.homeActs.length>6)s.homeActs=s.homeActs.slice(0,6);   /* 兜底：最多 6 张 */
+      if(!Array.isArray(s.customActs))s.customActs=[];
+      return s;
+    }
+  }catch(e){}
+  return {
+    species:'strawberry',choose:0,total:0,records:[],api:{...API_DEF},xp:0,mature:0,reward:false,
+    name:'自然爱好者',onboarded:false,pot:'terracotta',env:null,device:null,sound:true,
+    unlocked:['strawberry','sunflower','cactus','succulent','mint','tomato'],
+    today:{sunMin:0,waterMl:0,walkMin:0,bonus:0},
+    logs:[],
+    reminders:[
+      {kind:'sun',source:'plant',hh:8,mm:30,repeat:'daily',enabled:true,voice:'今天要不要去窗边？我也想晒晒太阳'},
+      {kind:'water',source:'plant',hh:10,mm:30,repeat:'daily',enabled:true,voice:'你喝水了吗？我也口渴'},
+      {kind:'walk',source:'plant',hh:13,mm:0,repeat:'daily',enabled:true,voice:'饭后走走，风会穿过叶子'},
+      {kind:'photo',source:'plant',hh:19,mm:30,repeat:'daily',enabled:true,voice:'再拍一张今天的自然'},
+      {kind:'rest',source:'plant',hh:21,mm:30,repeat:'daily',enabled:true,voice:'早点睡，明天一起晒太阳'},
+    ],
+    homeActs:['sun','water','walk'],
+    customActs:[],
+  };
+}
+let S=load();const save=()=>localStorage.setItem(KEY,JSON.stringify(S));
+const spOf=id=>SP.find(x=>x.id===id)||SP[0];
+const STAGES=[[0,'种子','SEED'],[10,'萌芽','SPROUT'],[30,'幼苗','SEEDLING'],[80,'茁壮','GROWING'],[150,'结果前','BUDDING'],[300,'成熟','HARVEST']];
+function stageInfo(t){let i=0;for(let k=0;k<STAGES.length;k++)if(t>=STAGES[k][0])i=k;const cur=STAGES[i],nxt=STAGES[i+1];const pct=nxt?Math.min(1,(t-cur[0])/(nxt[0]-cur[0])):1;return{i,zh:cur[1],en:cur[2],next:nxt?nxt[1]:null,need:nxt?nxt[0]-t:0,pct}}
+function stageOf(t){const s=stageInfo(t);return{zh:s.zh,en:s.en}}
+function sumK(k){const t=Date.now()-7*864e5;return S.records.filter(r=>r.ts>=t).reduce((a,r)=>a+(+r[k]||0),0)}
+function diversity(){const L=sumK('light'),W=sumK('water'),A=sumK('air'),B=sumK('biome');const t=L+W+A+B;if(!t)return 1;const r=[L/t,W/t,A/t,B/t];const v=r.reduce((a,x)=>a+(x-.25)**2,0)/4;return Math.min(1.3,Math.max(.6,1.3-(Math.sqrt(v)/.25)*.7))}
+function calcValue(sc){const c=spOf(S.species).coef;return Math.max(0,Math.floor((sc.light*c[0]+sc.water*c[1]+sc.air*c[2]+sc.biome*c[3])*diversity()))}
+const prog=()=>Math.min(1,S.total/FULL);
+function todayRecs(){const d=new Date();d.setHours(0,0,0,0);return S.records.filter(r=>r.ts>=d.getTime()&&(r.kind==='photo'||r.kind===undefined))}
+function bonusSun(){return Math.min(6,Math.floor(S.today.sunMin/10)*2)}
+function bonusWater(){return Math.min(3,Math.floor(S.today.waterMl/250))}
+function bonusWalk(){return Math.min(3,Math.floor(S.today.walkMin/10))}
+
+function addGain(n, label){
+  n=Math.max(0,Math.round(n));
+  if(!n){toast('再坚持一会就有加成');return}
+  const used=S.today.bonus||0;
+  const add=Math.min(n, Math.max(0, DAILY_BONUS_CAP-used));
+  if(add<=0){toast('今日活动加成已达上限');return}
+  S.today.bonus=used+add;
+  S.total=Math.min(FULL+50,S.total+add);
+  S.logs.push({t:Date.now(),label,value:add});
+  save(); refresh();
+  toast(label+' +'+add+' 光合');
+}
+
+/* 对话框原地轮换：点击气泡换下一句；旁边的独立小卡是确认按钮
+   advice=建议 → 打勾「知道了」；status=生长状态 → 微笑「点赞」 */
+let chatIdx=0;
+function chatLines(){
+  const p=prog();const L=[];
+  if(S.today.sunMin<10) L.push({t:'advice',txt:'陪我去晒晒太阳吧'});
+  if(S.today.waterMl<500) L.push({t:'advice',txt:'我也口渴了，记一杯水，我就能「喝到」'});
+  if(p<0.3) L.push({t:'advice',txt:'今天拍一张自然好吗？'});
+  else if(p<0.8) L.push({t:'status',txt:'叶子又舒展了一点'});
+  else if(p<0.98) L.push({t:'status',txt:'就快结果了'});
+  else L.push({t:'status',txt:S.reward?'纪念卡收好啦':'我熟啦，去图鉴领礼物'});
+  return L;
+}
+const ACK_ICON={
+  advice:'<svg viewBox="0 0 24 24" fill="none" stroke="#3d9a55" stroke-width="3" stroke-linecap="round"><path d="M4 12.5l5 5L20 6.5"/></svg>',
+  status:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffe066"/><circle cx="8.6" cy="10" r="1.5" fill="#1a1a1a"/><circle cx="15.4" cy="10" r="1.5" fill="#1a1a1a"/><path d="M7.6 14.3c1 1.8 2.6 2.8 4.4 2.8s3.4-1 4.4-2.8" stroke="#1a1a1a" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>'
+};
+const ACK_DONE='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#3d9a55"/><path d="M7.6 12.6l3 3 5.8-6.4" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function showChat(){
+  const l=chatLines();if(!l.length)return;
+  chatIdx=chatIdx%l.length;const it=l[chatIdx];
+  $('bubbleTxt').textContent=it.txt;
+  const b=$('bubbleAck');
+  b.classList.remove('done');
+  b.innerHTML=ACK_ICON[it.t];
+  b.setAttribute('aria-label',it.t==='advice'?'知道了，收到':'给植物点个赞');
+  b.title=it.t==='advice'?'知道了':'点赞';
+}
+function nextChat(){chatIdx=(chatIdx+1)%Math.max(chatLines().length,1);showChat()}
+function ackChat(){
+  const l=chatLines(),it=l[chatIdx%Math.max(l.length,1)];
+  const b=$('bubbleAck');
+  b.classList.add('done');       // 已确认配色
+  b.innerHTML=ACK_DONE;
+  b.setAttribute('aria-label','已确认');
+  b.title='已确认';
+  toast(it&&it.t==='status'?'植物开心地晃了晃叶子':'收到，我记住啦');
+}
+window.nextChat=nextChat;window.ackChat=ackChat;
+/* 点击植物时的趣味回应（3D 晃动由 __sway 触发，这里只做文案反馈） */
+const SWAY_LINES=['嘿嘿，痒痒的～','微风吹过来啦，好舒服～','被你摸到啦，晃一晃～','今天也一起晒太阳吧～'];
+window.__swayAck=()=>{
+  const el=$('bubbleTxt'); if(!el)return;
+  el.textContent=SWAY_LINES[Math.floor(Math.random()*SWAY_LINES.length)];
+};
+
+/* ---------- 活动：晒太阳 / 喝水 / 散步 ---------- */
+let sunTimer=null, sunStart=0;
+function fmt(ms){const s=Math.floor(ms/1000);return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
+function toggleSun(){
+  if(sunTimer){ endSun(); return; }
+  sunStart=Date.now(); sunTimer=setInterval(tickSun,250);
+  $('sunBadge').classList.add('on');
+  if($('actSun'))$('actSun').classList.add('live');
+  if($('sunGo'))$('sunGo').textContent='结束';
+  if($('actSunT'))$('actSunT').textContent='进行中';
+  toast('开始晒太阳 · 徽章时长与你同步');
+}
+function tickSun(){
+  const ms=Date.now()-sunStart;
+  $('sunTime').textContent=fmt(ms);
+  if($('sunBig'))$('sunBig').textContent=fmt(ms);
+}
+function endSun(){
+  const min=Math.max(1,Math.round((Date.now()-sunStart)/60000));
+  clearInterval(sunTimer); sunTimer=null;
+  $('sunBadge').classList.remove('on');
+  if($('actSun'))$('actSun').classList.remove('live');
+  if($('sunGo'))$('sunGo').textContent='开始';
+  if($('actSunT'))$('actSunT').textContent=fmt(min*60000);
+  if($('sunSession'))$('sunSession').style.display='none';
+  S.today.sunMin+=min;
+  const g=bonusSun();
+  addGain(Math.min(6,Math.floor(min/10)*2)||1, '晒太阳 '+min+' 分钟');
+  S.logs.push({t:Date.now(),label:'日光',value:0,note:min+' 分钟（可接手表日光时间）'});
+  save(); refresh();
+}
+window.toggleSun=toggleSun;
+
+function drink(){
+  S.today.waterMl+=250;
+  if($('actWaterT'))$('actWaterT').textContent=S.today.waterMl+' ml';
+  // 3D 水壶浇水动画
+  if(window.__pour3D)window.__pour3D();
+  addGain(bonusWater()>0?1:1, '喝水 250ml');
+  // 已有奖励计入 total，bonus 只做统计
+  refresh();
+}
+window.drink=drink;
+
+/* 散步：与晒太阳一致的过程性交互 —— 点击开始散步（显示状态+计时），
+   再次点击结束，按两次点击之间的真实时长结算光合值 */
+let walkTimer=null, walkStart=0;
+function toggleWalk(){
+  if(walkTimer){ endWalk(); return; }
+  walkStart=Date.now();
+  walkTimer=setInterval(tickWalk,250);
+  if($('actWalk'))$('actWalk').classList.add('live');
+  if($('walkState'))$('walkState').classList.add('on');
+  if($('actWalkT'))$('actWalkT').textContent='进行中';
+  if($('walkTime'))$('walkTime').textContent='00:00';
+  toast('开始散步 · 结束后按实际时长结算');
+  refresh();
+}
+function tickWalk(){
+  const ms=Date.now()-walkStart;
+  if($('walkTime'))$('walkTime').textContent=fmt(ms);
+  if($('actWalkT'))$('actWalkT').textContent=fmt(ms);
+}
+function endWalk(){
+  const ms=Date.now()-walkStart;
+  const min=Math.max(1,Math.round(ms/60000));
+  clearInterval(walkTimer); walkTimer=null;
+  if($('actWalk'))$('actWalk').classList.remove('live');
+  if($('walkState'))$('walkState').classList.remove('on');
+  S.today.walkMin+=min;
+  /* 光合值：每 10 分钟 1 点，最多 6 点；不足 10 分钟也给 1 点保底 */
+  const gain=Math.min(6,Math.floor(min/10)*1)||1;
+  addGain(gain, '散步 '+min+' 分钟');
+  S.logs.push({t:Date.now(),label:'散步',value:0,note:min+' 分钟'});
+  save(); refresh();
+  toast('散步结束 · '+min+' 分钟 · +'+gain+' 光合');
+}
+window.toggleWalk=toggleWalk;
+
+/* 深呼吸：Apple Watch 式呼吸引导 —— 植物外圈扩散光环带着用户吸气/屏息/呼气 */
+let brT=-1, brBase=0;
+const BR_TIMES=[3.5,1,4.5];            /* 吸气 / 屏息 / 呼气 秒数 */
+const BR_CYCLES=3;
+let brRings=null;
+function breathe(){
+  if(brT>=0){endBreathe(false);return}
+  const el=$('breathe'); if(!el)return;
+  brRings=[...el.querySelectorAll('.br-ring')];
+  el.classList.add('on');
+  /* 光环基准尺寸：按植物屏幕横向宽度取略大一圈，既不挡住植物也不撑出画面 */
+  const ps=plantScreenSize();
+  const base=(ps&&ps.w)?ps.w*1.22:220;
+  brBase=Math.max(180,Math.min(base,(ps&&ps.cw?ps.cw:430)*.78));
+  brRings.forEach(r=>{r.style.width=brBase+'px';r.style.height=brBase+'px'});
+  brT=0;
+}
+function endBreathe(finished){
+  const el=$('breathe'); if(!el)return;
+  el.classList.remove('on'); brT=-1;
+  if(!finished)toast('已结束呼吸');
+}
+window.stopBreathe=()=>endBreathe(false);
+window.breathe=breathe;
+/* 植物在屏幕上的直径（用于光环尺寸）：由 three 模块注入，取不到时用默认值 */
+function plantScreenSize(){
+  try{return window.__plantScreen&&window.__plantScreen()}catch(e){return null}
+}
+function updateBreathe(dt){
+  if(brT<0||!brRings)return;
+  brT+=dt;
+  const cyc=BR_TIMES[0]+BR_TIMES[1]+BR_TIMES[2];
+  const total=cyc*BR_CYCLES;
+  if(brT>=total){                                   /* 三轮完成 → 结算 */
+    endBreathe(true);
+    addGain(1,'深呼吸 3 次');
+    S.logs.push({t:Date.now(),label:'深呼吸',value:0,note:'3 次 · 呼吸完成'});
+    save(); refresh(); toast('呼吸完成 · +1 光合，均衡 +0.05');
+    return;
+  }
+  const idx=Math.floor(brT/cyc);                    // 第几轮
+  const inCycle=brT-idx*cyc;
+  let stage,p;
+  if(inCycle<BR_TIMES[0]){stage=0;p=inCycle/BR_TIMES[0]}
+  else if(inCycle<BR_TIMES[0]+BR_TIMES[1]){stage=1;p=1}
+  else{stage=2;p=1-(inCycle-BR_TIMES[0]-BR_TIMES[1])/BR_TIMES[2]}
+  const ease=x=>x<.5?2*x*x:1-Math.pow(-2*x+2,2)/2;   // easeInOutQuad
+  const k=ease(Math.max(0,Math.min(1,p)));
+  const scale=.78+k*.42;                             // 吸气放大、呼气收回
+  const op=.35+k*.5;
+  brRings.forEach((r,i)=>{
+    const s=scale+i*.09;                             // 三层错开，形成扩散涟漪
+    r.style.transform=`scale(${s.toFixed(3)})`;
+    r.style.opacity=(op-i*.16).toFixed(3);
+  });
+  const word=$('brWord'), cnt=$('brCount');
+  if(word)word.textContent=stage===0?'吸气':(stage===1?'屏息':'呼气');
+  if(cnt)cnt.textContent=`第 ${idx+1} / ${BR_CYCLES} 次`;
+}
+
+/* ---------- 首页快捷卡片（可自定义） ---------- */
+const ACT_ICONS={
+  sun:'<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="5" fill="#ffb547"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2" stroke="#c96a00" stroke-width="2"/></svg>',
+  water:'<svg viewBox="0 0 24 24" fill="none"><path d="M4 9h11l4 3v3H4z" fill="#eaf7e6" stroke="#3d9a55" stroke-width="1.5"/><path d="M15 9l4-4" stroke="#3d9a55" stroke-width="1.5"/><path d="M8 15v3M12 15v3" stroke="#7ec8ff" stroke-width="1.5"/></svg>',
+  walk:'<svg viewBox="0 0 24 24" fill="none"><path d="M13 5a2 2 0 11-4 0 2 2 0 014 0z" fill="#3d9a55"/><path d="M12 8l-1 5 3 3v5M11 13l-3 4" stroke="#3d9a55" stroke-width="2" stroke-linecap="round"/></svg>',
+  breathe:'<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" fill="#8FD3FF"/><path d="M4 12h3M17 12h3" stroke="#3d9a55" stroke-width="2"/></svg>',
+  photo:'<svg viewBox="0 0 24 24" fill="none" stroke="#e85a6b" stroke-width="2"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.2"/></svg>',
+  leaf:'<svg viewBox="0 0 24 24" fill="none"><path d="M5 19C5 9 13 5 20 5c0 8-4 14-13 14" stroke="#3d9a55" stroke-width="2"/><path d="M6 18c3-5 7-8 11-10" stroke="#3d9a55" stroke-width="1.5"/></svg>',
+  star:'<svg viewBox="0 0 24 24" fill="#ffd166" stroke="#e8a800" stroke-width="1.5"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 5.9L12 16.4 6.7 19.3l1.2-5.9L3.4 9.3l6-.7z"/></svg>',
+  heart:'<svg viewBox="0 0 24 24" fill="#ff8fa3" stroke="#e05c75" stroke-width="1.5"><path d="M12 20s-7-4.6-9-9c-1.2-2.7.6-6 3.7-6 2 0 3.4 1.2 4.3 2.6C11.9 6.2 13.3 5 15.3 5c3.1 0 4.9 3.3 3.7 6-2 4.4-9 9-9 9z"/></svg>'
+};
+const OFFICIAL_ACTS={sun:'晒太阳',water:'喝水',walk:'散步',breathe:'深呼吸',photo:'拍自然'};
+function customById(id){return S.customActs.find(c=>'c'+c.uid===id)}
+function actSub(id){
+  if(id==='sun')return sunTimer?'进行中':(S.today.sunMin?S.today.sunMin+' 分钟':'点击开始');
+  if(id==='water')return S.today.waterMl?S.today.waterMl+' ml':'记一杯';
+  if(id==='walk')return walkTimer?'进行中':(S.today.walkMin?S.today.walkMin+' 分钟':'点击开始');
+  if(id==='breathe')return '3 次';
+  if(id==='photo')return '今日 '+Math.min(todayRecs().length,3)+'/3';
+  const c=customById(id);return c?c.name:'';
+}
+function renderActs(){
+  $('actRow').innerHTML=S.homeActs.map(id=>{
+    const off=OFFICIAL_ACTS[id], c=customById(id);
+    const name=off||c?.name||'活动';
+    const icon=off?ACT_ICONS[id]:(ACT_ICONS[c?.icon]||ACT_ICONS.leaf);
+    const smallId=id==='sun'?'id="actSunT"':id==='water'?'id="actWaterT"':id==='walk'?'id="actWalkT"':'';
+    return `<div class="act" ${id==='sun'?'id="actSun"':(id==='walk'?'id="actWalk"':'')} onclick="runAct('${id}')">${icon}<b>${name}</b><small ${smallId}>${actSub(id)}</small></div>`;
+  }).join('');
+}
+window.runAct=id=>{
+  if(id==='sun')toggleSun();
+  else if(id==='water')drink();
+  else if(id==='walk')toggleWalk();
+  else if(id==='breathe')breathe();
+  else if(id==='photo')openCamera();
+  else{const c=customById(id);if(c){S.logs.push({t:Date.now(),label:c.name,value:0});save();addGain(1,c.name)}}
+};
+const HOME_ACT_LIMIT=6;                      /* 首页快捷卡最多 6 张 */
+const DEFAULT_ACTS=['sun','water','walk'];   /* 默认提供的三个功能 */
+function renderHomeActs(){
+  const el=$('homeActList');if(!el)return;
+  if($('actCap'))$('actCap').textContent=`已选 ${S.homeActs.length} / ${HOME_ACT_LIMIT}`;
+  const row=(it)=>{
+    const on=S.homeActs.includes(it.id);
+    return `<div class="act-edit">
+      <div class="ae-ico">${it.icon}</div>
+      <div class="ae-txt"><b>${it.name}</b><span>${on?'已显示在主页':'未显示'}${it.custom?' · 自定义':''}</span></div>
+      ${it.custom?`<button class="ae-btn" data-edit="${it.id}">编辑</button><button class="ae-btn del" data-del="${it.id}">删除</button>`:''}
+      <div class="sw ${on?'on':''}" data-act="${it.id}"></div>
+    </div>`;
+  };
+  const defs=DEFAULT_ACTS.map(id=>({id,name:OFFICIAL_ACTS[id],icon:ACT_ICONS[id]}));
+  const customs=S.customActs.map(c=>({id:'c'+c.uid,name:c.name,icon:ACT_ICONS[c.icon]||ACT_ICONS.leaf,custom:true}));
+  el.innerHTML=defs.map(row).join('')+
+    (customs.length?'<div class="tl-day" style="margin-top:var(--sp-2)">自定义活动</div>'+customs.map(row).join(''):'');
+  el.querySelectorAll('.sw').forEach(sw=>sw.onclick=()=>{
+    const id=sw.dataset.act;
+    if(S.homeActs.includes(id)){
+      if(S.homeActs.length<=1){toast('至少保留一张卡片');return}
+      S.homeActs=S.homeActs.filter(x=>x!==id);
+    }else{
+      if(S.homeActs.length>=HOME_ACT_LIMIT){toast(`首页最多放 ${HOME_ACT_LIMIT} 张卡片`);return}
+      S.homeActs.push(id);
+    }
+    save();renderHomeActs();renderActs();
+  });
+  el.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
+    const id=b.dataset.del;
+    if(!confirm('删除这个自定义活动？'))return;
+    S.customActs=S.customActs.filter(c=>'c'+c.uid!==id);
+    S.homeActs=S.homeActs.filter(x=>x!==id);
+    save();renderHomeActs();renderActs();toast('已删除该活动');
+  });
+  el.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>editCustomAct(b.dataset.edit));
+}
+let editActId=null;                 /* null=新增，否则为正在编辑的自定义活动 id */
+window.addCustomAct=()=>{
+  editActId=null;
+  $('actName').value=''; $('actIcon').value='leaf';
+  const t=$('sheetActTitle'); if(t)t.textContent='添加自定义活动';
+  closeSheet();$('sheetAct').classList.add('on');
+};
+function editCustomAct(id){
+  const c=S.customActs.find(x=>'c'+x.uid===id); if(!c)return;
+  editActId=id;
+  $('actName').value=c.name; $('actIcon').value=c.icon||'leaf';
+  const t=$('sheetActTitle'); if(t)t.textContent='编辑活动';
+  closeSheet();$('sheetAct').classList.add('on');
+}
+window.editCustomAct=editCustomAct;
+window.saveCustomAct=()=>{
+  const name=$('actName').value.trim();
+  if(!name){toast('先给活动起个名字');return}
+  const icon=$('actIcon').value;
+  if(editActId){                                   /* 编辑已有活动 */
+    const c=S.customActs.find(x=>'c'+x.uid===editActId);
+    if(c){c.name=name;c.icon=icon}
+    toast('已更新「'+name+'」');
+  }else{                                           /* 新增 */
+    if(S.homeActs.length>=HOME_ACT_LIMIT){toast(`首页最多放 ${HOME_ACT_LIMIT} 张卡片`);return}
+    const uid=Date.now();
+    S.customActs.push({uid,name,icon});
+    S.homeActs.push('c'+uid);
+    toast('已添加「'+name+'」');
+  }
+  editActId=null;
+  save();closeSheet();renderHomeActs();renderActs();
+};
+
+/* ---------- 提醒 ---------- */
+const KIND={sun:'晒太阳',water:'喝水',walk:'walk'==='walk'?'散步':'散步',photo:'拍照',rest:'休息'};
+function renderRems(){
+  const el=$('remList');
+  el.innerHTML=S.reminders.map((r,i)=>`
+    <div class="rem">
+      <div class="rt"><b>${String(r.hh).padStart(2,'0')}:${String(r.mm).padStart(2,'0')}</b>
+        · ${KIND[r.kind]||r.kind} · ${r.repeat==='daily'?'每天':'工作日'}
+        <div class="muted">${r.voice||''}${r.source==='plant'?' · 植物':' · 自定'}</div></div>
+      <div class="sw ${r.enabled?'on':''}" data-i="${i}"></div>
+    </div>`).join('');
+  el.querySelectorAll('.sw').forEach(sw=>{
+    sw.onclick=()=>{const i=+sw.dataset.i;S.reminders[i].enabled=!S.reminders[i].enabled;save();renderRems()};
+  });
+}
+window.addReminder=()=>{closeSheet();$('sheetRem').classList.add('on')};
+window.saveReminder=()=>{
+  const kind=$('remKind').value;
+  const t=($('remTime').value||'15:00').split(':');
+  S.reminders.push({
+    kind, source:'user',
+    hh:+t[0], mm:+t[1], repeat:$('remRep').value, enabled:true,
+    voice:$('remVoice').value.trim()||({
+      sun:'该晒太阳啦，陪我出门一下？',
+      water:'记得喝水，顺便给我浇点',
+      walk:'走走吧，叶子会跟着风动',
+      photo:'再拍一张自然，我就能长大',
+      rest:'该休息了，明天见',
+    })[kind]
+  });
+  save(); closeSheet(); openSub('s-sync'); toast('已添加提醒');
+};
+
+/* ---------- 拍照光合 ---------- */
+function mockScores(){const p=()=>Math.floor(Math.random()*4);return{light:p(),water:p(),air:p(),biome:p()}}
+window.openCamera=()=>$('sheetCam').classList.add('on');
+window.mockTake=()=>{closeSheet();finishTake(mockScores(),'mock');const r=Math.random();setTimeout(()=>askEnv(r<.12?'rain':(r<.2?'snow':'none')),1200)};
+function finishTake(sc,mode){
+  const n=todayRecs().length;
+  let value=calcValue(sc); if(n>=3)value=Math.floor(value*0.5);
+  S.records.push({...sc,value,kind:'photo',ts:Date.now(),mode});
+  S.total=Math.min(FULL+50,S.total+value); S.xp+=1;
+  const lv=1+Math.floor(S.xp/50);
+  SP.forEach(sp=>{if(sp.unlock<=lv&&!S.unlocked.includes(sp.id))S.unlocked.push(sp.id)});
+  if(S.total>=FULL&&!S.mature){S.mature=1;S.xp+=20}
+  save();
+  $('scTotal').textContent='+'+value;
+  $('scL').textContent=sc.light;$('scW').textContent=sc.water;$('scA').textContent=sc.air;$('scB').textContent=sc.biome;
+  $('scMode').textContent=mode==='ai'?'AI':'模拟';
+  $('scMeta').textContent='均衡 '+diversity().toFixed(2)+' · 累计 '+S.total;
+  $('sheetScore').classList.add('on');
+  refresh();
+  if(S.total>=FULL&&!S.reward)setTimeout(()=>{closeSheet();$('sheetReward').classList.add('on')},700);
+}
+$('photoInput')?.addEventListener('change',async e=>{
+  const f=e.target.files&&e.target.files[0];e.target.value='';
+  if(!f)return; closeSheet(); toast('AI 识别中…');
+  let sc,mode='mock',w='none';
+  if(S.api.key&&S.api.key.length>8){try{sc=await ai(f);mode='ai';w=sc.weather||'none'}catch(err){console.warn(err);toast('AI 失败，改模拟');sc=mockScores()}}
+  else{await new Promise(r=>setTimeout(r,500));sc=mockScores();const rr=Math.random();w=rr<.12?'rain':(rr<.2?'snow':'none')}
+  finishTake(sc,mode);
+  setTimeout(()=>askEnv(w),1200);
+});
+async function ai(file){
+  const b64=await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result).split(',')[1]);fr.onerror=rej;fr.readAsDataURL(file)});
+  const res=await fetch(S.api.url,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+S.api.key},
+    body:JSON.stringify({model:S.api.model,max_tokens:80,temperature:.3,messages:[
+      {role:'system',content:'对照片四要素打分0-3：光light、水water、气air、境biome。只输出JSON'},
+      {role:'user',content:[{type:'image_url',image_url:{url:'data:image/jpeg;base64,'+b64,detail:'low'}},{type:'text',text:'只输出JSON'}]}
+    ]})});
+  if(!res.ok)throw new Error('HTTP'+res.status);
+  const t=(await res.json()).choices?.[0]?.message?.content||'';
+  const o=JSON.parse((t.match(/\{[\s\S]*\}/)||['{}'])[0]);
+  const c=x=>Math.min(3,Math.max(0,Math.round(+x||0)));
+  return{light:c(o.light),water:c(o.water),air:c(o.air),biome:c(o.biome),weather:o.weather||'none'};
+}
+
+function renderColl(){
+  const left=Math.max(0,FULL-S.total);
+  const days=Math.ceil(left/24);
+  /* 顶部总览：当前伙伴 + 成长阶段 + 光合进度 + 解锁统计 */
+  const sp0=spOf(S.species), st=stageInfo(S.total);
+  const totalSp=SP.length;
+  const gotSp=SP.filter(s=>S.unlocked.includes(s.id)||s.unlock<=1).length;
+  $('collHero').innerHTML=`
+    <div class="ch-ico">${iconPlant(sp0.id)}</div>
+    <div class="ch-main">
+      <div class="ch-name">${sp0.name}</div>
+      <div class="ch-stage">${st.zh}${st.next?' · 下一阶段 '+st.next:' · 已成熟'}</div>
+      <div class="ch-bar"><i style="width:${Math.round(prog()*100)}%"></i></div>
+      <div class="ch-num">${S.total} / ${FULL} 光合 · ${Math.round(prog()*100)}%</div>
+    </div>
+    <div class="ch-side">
+      <div class="ch-cnt"><b>${gotSp}</b><span>/${totalSp}</span></div>
+      <div class="ch-lbl">已解锁物种</div>
+    </div>`;
+  if($('collCnt'))$('collCnt').textContent=gotSp+' / '+totalSp;
+  if($('potCur'))$('potCur').textContent=POT_OF(S.pot).name;
+  if($('potMini'))$('potMini').innerHTML=potSvg(S.pot);
+  $('giftGrid').innerHTML=`
+    <div class="gift-card"><div class="cd">${days}<small> 日</small></div>
+      <div class="bar"><i style="width:${Math.round(prog()*100)}%"></i></div>
+      <div class="ico-row"><svg viewBox="0 0 24 24"><path d="M12 20v-8" stroke="#3d9a55" stroke-width="2.5"/><path d="M12 14c5-1 8-5 7-9-5 0-8 4-7 9z" fill="#6fcf7a"/></svg>
+      <svg viewBox="0 0 24 24"><rect x="3" y="10" width="18" height="11" rx="2" fill="#fff" stroke="#e85a6b" stroke-width="1.5"/><path d="M3 10h18v3H3z" fill="#e85a6b"/></svg></div>
+      <div class="muted">成熟解锁明信片</div></div>
+    <div class="gift-card"><div class="cd">${S.total}<small>/${FULL}</small></div>
+      <div class="bar"><i style="width:${Math.round(prog()*100)}%;background:#6fcf7a"></i></div>
+      <div class="muted">累计光合</div></div>`;
+  $('collGrid').innerHTML=SP.map(sp=>{
+    const unlocked=S.unlocked.includes(sp.id)||sp.unlock<=1;
+    const cur=sp.id===S.species;
+    return `<div class="sp ${cur?'on':''} ${unlocked?'':'lock'}" onclick="adopt('${sp.id}')">
+      <div class="ico">${unlocked?iconPlant(sp.id):'<svg viewBox="0 0 24 24"><path d="M12 3a5 5 0 00-5 5v3a2 2 0 00-2 2v6h14v-6a2 2 0 00-2-2V8a5 5 0 00-5-5z" fill="#cfd8cd"/></svg>'}</div>
+      <div class="sp-name">${sp.name}</div>
+      <div class="muted">${sp.rare?'稀有':'普通'}</div>
+      ${cur?'<div class="tag-cur">养殖中</div>':unlocked?(sp.rare?'<div class="tag-r">稀有 · 已解锁</div>':'<div class="tag-ok">已解锁</div>'):'<div class="tag-r">Lv.'+sp.unlock+' 解锁</div>'}
+    </div>`;
+  }).join('');
+}
+function iconPlant(k){
+  const map={
+    strawberry:'<path d="M12 6c2-3 5-4 7-3" stroke="#3d9a55" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M6 10c0-2.5 2.7-4 6-4s6 1.5 6 4c0 5-3.4 10-6 10s-6-5-6-10z" fill="#e05252"/><circle cx="9.5" cy="12" r="1" fill="#ffd9a0"/><circle cx="14.5" cy="12" r="1" fill="#ffd9a0"/><circle cx="12" cy="16" r="1" fill="#ffd9a0"/>',
+    sunflower:'<circle cx="12" cy="13" r="4" fill="#8b5a2b"/><g fill="#ffd84d"><circle cx="12" cy="5.5" r="2.6"/><circle cx="18" cy="9" r="2.6"/><circle cx="18" cy="16" r="2.6"/><circle cx="12" cy="20.5" r="2.6"/><circle cx="6" cy="16" r="2.6"/><circle cx="6" cy="9" r="2.6"/></g>',
+    cactus:'<rect x="10" y="6" width="4" height="13" rx="2" fill="#3d9a55"/><rect x="5" y="10" width="4" height="6" rx="2" fill="#6fcf7a"/><rect x="15" y="8" width="4" height="5" rx="2" fill="#6fcf7a"/><path d="M7 19h10" stroke="#c96a00" stroke-width="2.4" stroke-linecap="round"/>',
+    succulent:'<g fill="#6fcf7a"><ellipse cx="12" cy="15" rx="3" ry="5"/><ellipse cx="7" cy="15" rx="2.4" ry="4" transform="rotate(-30 7 15)"/><ellipse cx="17" cy="15" rx="2.4" ry="4" transform="rotate(30 17 15)"/></g><path d="M6 19h12" stroke="#c96a00" stroke-width="2.4" stroke-linecap="round"/>',
+    mint:'<g fill="#4caf50"><path d="M12 13c-4 0-6-2.5-6-6 4 0 6 2.5 6 6z"/><path d="M12 13c4 0 6-2.5 6-6-4 0-6 2.5-6 6z"/><path d="M12 19c-3.5 0-5-2-5-5 3.5 0 5 2 5 5z"/><path d="M12 19c3.5 0 5-2 5-5-3.5 0-5 2-5 5z"/></g><path d="M12 8v11" stroke="#2f7d45" stroke-width="1.6"/>',
+    tomato:'<circle cx="12" cy="14" r="7" fill="#e8503a"/><path d="M12 7l-2-2M12 7l2-2M12 7v-3" stroke="#3d9a55" stroke-width="1.8" stroke-linecap="round"/><path d="M8 8c1.5-1.5 6.5-1.5 8 0-1.5 1.2-6.5 1.2-8 0z" fill="#3d9a55"/>',
+    pine:'<path d="M12 3l5 8H7z" fill="#2f7d45"/><path d="M12 8l6.5 9h-13z" fill="#3d9a55"/><rect x="11" y="17" width="2" height="4" fill="#8b5a2b"/>',
+    lavender:'<g fill="#9b7fd4"><circle cx="12" cy="5" r="1.8"/><circle cx="10" cy="8" r="1.8"/><circle cx="14" cy="8" r="1.8"/><circle cx="10.5" cy="11.5" r="1.8"/><circle cx="13.5" cy="11.5" r="1.8"/></g><path d="M12 13v8" stroke="#3d9a55" stroke-width="1.8"/><path d="M12 17c-2 0-3-1-3.5-2.5M12 15.5c2 0 3-1 3.5-2.5" stroke="#4caf50" stroke-width="1.6" fill="none"/>',
+    orange:'<circle cx="12" cy="14" r="7" fill="#f59e0b"/><path d="M12 7c.5-1.5 2-2.5 3.5-2.5" stroke="#3d9a55" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="9.5" cy="12" r="1.2" fill="#fcd34d"/><circle cx="14.5" cy="15.5" r="1.2" fill="#fcd34d"/>',
+    blueberry:'<circle cx="9" cy="14" r="4.5" fill="#5b7fd4"/><circle cx="15" cy="15" r="4" fill="#4a6bc4"/><circle cx="9" cy="12.5" r="1" fill="#2c3f80"/><circle cx="15" cy="13.8" r=".9" fill="#2c3f80"/><path d="M9 9.5c1-2 3-3 5-2.5" stroke="#3d9a55" stroke-width="1.6" fill="none"/>',
+    cherry:'<circle cx="8.5" cy="15" r="3.8" fill="#d63a4a"/><circle cx="15.5" cy="16" r="3.4" fill="#e05252"/><path d="M8.5 11C10 7 13 5 16 5M15.5 12.5C15 9 14 7 12 5.5" stroke="#3d9a55" stroke-width="1.6" fill="none" stroke-linecap="round"/>',
+    melon:'<ellipse cx="12" cy="13" rx="9" ry="7" fill="#2f7d45"/><path d="M12 6v14M7 7.5c2 3.5 2 8 0 11M17 7.5c-2 3.5-2 8 0 11" stroke="#6fcf7a" stroke-width="1.6" fill="none"/>',
+  };
+  return '<svg viewBox="0 0 24 24" style="filter:drop-shadow(0 2px 5px rgba(0,0,0,.18))"><g stroke="#fff" stroke-width="1.2" stroke-linejoin="round" paint-order="stroke">'+(map[k]||map.strawberry)+'</g></svg>';
+}
+function adopt(id){
+  const sp=spOf(id); const unlocked=S.unlocked.includes(id)||sp.unlock<=1;
+  if(!unlocked){toast('Lv.'+sp.unlock+' 解锁 '+sp.name);return}
+  S.species=id;save();show('s-home');toast('已领养 '+sp.name);
+  if(!S.onboarded){S.onboarded=true;save();setTimeout(()=>openSub('s-device'),400)}
+}
+/* ---------- 花盘：先选植物再选花盘；图鉴内可随时换盆 ---------- */
+let potMode='onboard';
+function choosePlant(id){
+  const sp=spOf(id); const unlocked=S.unlocked.includes(id)||sp.unlock<=1;
+  if(!unlocked){toast('Lv.'+sp.unlock+' 解锁 '+sp.name);return}
+  S.species=id; save(); openPot('onboard');
+}
+function openPot(mode){
+  potMode=mode;
+  $('potPlant').textContent=spOf(S.species).name;
+  renderPots(); show('s-pot');
+}
+function renderPots(){
+  const cur=S.pot;
+  $('potGrid').innerHTML=POTS.map(p=>{
+    const locked=potLocked(p), on=p.id===cur;
+    return `<div class="pot-card ${on?'on':''} ${locked?'lock':''}" onclick="selectPot('${p.id}')">
+      <div class="pot-ico">${potSvg(p.id)}</div>
+      <div class="pot-name">${p.name}</div>
+      <div class="pot-rar">${p.rare?'稀有':'普通'}</div>
+      ${locked?`<div class="lock-mask">Lv.${p.unlock} 解锁</div>`:''}
+    </div>`;
+  }).join('');
+}
+function selectPot(id){
+  const p=POT_OF(id);
+  if(potLocked(p)){toast('再陪我记录 '+Math.max(0,p.unlock*15-S.total)+' 次就解锁啦');return}
+  S.pot=id; save(); renderPot();
+  if(potMode==='onboard'){ show('s-home'); toast('已带它回家 · '+p.name); }
+  else { show('s-home'); openSub('s-collection'); toast('已换上 '+p.name); }
+}
+function closePot(){ if(potMode==='onboard') show('s-choose'); else { show('s-home'); openSub('s-collection'); } }
+/* 主页底部花盘渲染（占位 SVG，后续可替换为真实花盘 3D/贴图） */
+function renderPot(){const el=$('potLayer');if(el)el.innerHTML=potSvg(S.pot);}
+/* ---------- 环境系统：白天/傍晚/夜晚随真实时间；雨/雪由拍照识别，仅保留一天 ---------- */
+const todayKey=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()};
+function envPhase(){const h=new Date().getHours()+new Date().getMinutes()/60;return h>=6&&h<17?'day':(h>=17&&h<19.5?'evening':'night')}
+function envWeather(){return (S.env&&S.env.date===todayKey())?S.env.type:null}
+function applyEnv(){
+  const L=$('envLayer'),T=$('envTint'),F=$('envFx'); if(!L||!T||!F)return;
+  const ph=envPhase(),w=envWeather();
+  L.className='env-layer p-'+ph;
+  T.className='env-tint '+(!w?(ph==='evening'?'t-evening':ph==='night'?'t-night':''):'t-'+w);
+  F.className='env-fx '+(w==='rain'?'fx-rain':w==='snow'?'fx-snow':'');
+  F.innerHTML='';
+  if(w){
+    const n=w==='rain'?46:32; let h='';
+    for(let i=0;i<n;i++){
+      const dur=w==='rain'?(.7+Math.random()*.5):(4+Math.random()*4);
+      h+=`<i style="left:${(Math.random()*100).toFixed(1)}%;animation-delay:${(Math.random()*3).toFixed(2)}s;animation-duration:${dur.toFixed(2)}s"></i>`;
+    }
+    F.innerHTML=h;
+  }
+}
+function askEnv(w){
+  if(!w||w==='none'||w===envWeather())return;
+  const el=$('envAsk'); if(!el)return;
+  $('envAskTxt').textContent=w==='rain'
+    ?'看起来您这边是下雨了，需要将植物的生长环境也变为雨天吗？'
+    :'看起来您那边下雪了，需要将植物的生长环境也变为雪天吗？';
+  el.dataset.w=w; el.classList.add('on');
+}
+window.envYes=()=>{const el=$('envAsk');S.env={type:el.dataset.w,date:todayKey()};save();el.classList.remove('on');applyEnv();toast(el.dataset.w==='rain'?'植物环境已变为雨天':'植物环境已变为雪天')};
+window.envNo=()=>{$('envAsk').classList.remove('on');toast('已保持当前环境')};
+setInterval(applyEnv,60000);
+window.adopt=adopt;
+
+function renderDiary(){
+  $('sumL').textContent=sumK('light');$('sumW').textContent=sumK('water');
+  $('sumA').textContent=sumK('air');$('sumB').textContent=sumK('biome');
+  const dv=diversity();
+  $('divTxt').textContent=dv>=1.15?'四要素很均衡，植物状态特别好':dv>=0.95?'四要素比较均衡，继续保持':dv>=0.8?'有一项偏少了，均衡一点会长得更好':'最近四要素有点失衡，多陪我做些不同的活动吧';
+  $('bonusTxt').textContent=`晒太阳 ${S.today.sunMin} 分钟 · 喝水 ${S.today.waterMl} ml · 散步 ${S.today.walkMin} 分钟`;
+  const rows=[...S.records.map(r=>({t:r.ts,label:r.mode==='ai'?'拍照 AI':'拍照',value:r.value,note:r.title||''})), ...S.logs]
+    .sort((a,b)=>b.t-a.t).slice(0,40);
+  const el=$('histList');
+  if($('histCnt'))$('histCnt').textContent='共 '+rows.length+' 条';
+  if(!rows.length){el.innerHTML='<div class="tl-empty">还没有记录，去陪它做点什么吧</div>';return}
+  /* 按日期分组的时间轴：左侧节点 + 内容 + 时长/光合 */
+  const days=[];
+  for(const r of rows){
+    const d=new Date(r.t);
+    const key=`${d.getMonth()+1}月${d.getDate()}日`;
+    let g=days[days.length-1];
+    if(!g||g.key!==key){g={key,items:[]};days.push(g)}
+    g.items.push(r);
+  }
+  const kindOf=l=>/拍照/.test(l)?'tl-photo':/晒太阳|日光/.test(l)?'tl-sun':'tl-act';   /* 前缀避免与主页 .act 卡片样式冲突 */
+  el.innerHTML=days.map(g=>`
+    <div class="tl-day">${g.key}</div>
+    ${g.items.map(r=>{
+      const d=new Date(r.t);
+      const hh=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+      const m=r.note&&/(\d+)\s*分钟/.exec(r.note);
+      const dur=m?m[1]+' 分钟':'';
+      const note=(m?r.note.replace(m[0],'').replace(/^[\s·、,，]+|[\s·、,，]+$/g,''):r.note)||'';
+      const meta=[dur,note].filter(Boolean).join(' · ');
+      return `<div class="tl-item ${kindOf(r.label)}">
+        <div class="tl-node"></div>
+        <div class="tl-body">
+          <div class="tl-top"><span class="tl-time">${hh}</span><span class="tl-gain">${r.value?'+'+r.value+' 光合':''}</span></div>
+          <div class="tl-name">${r.label}</div>
+          ${meta?`<div class="tl-meta">${meta}</div>`:''}
+        </div>
+      </div>`;
+    }).join('')}
+  `).join('');
+}
+
+function renderChoose(){
+  /* 选择页只展示零门槛植物（任何用户都能直接选），不含稀有/需等级解锁的植物 */
+  const BASIC=SP.filter(sp=>sp.unlock<=1);
+  const len=BASIC.length, idx=S.choose%len;
+  const order=Array.from({length:len*3},(_,k)=>(k-len+len*3)%len);
+  $('track').innerHTML=order.map(ridx=>{
+    const sp=BASIC[ridx];
+    let cls=ridx<idx?'side-left':'side-right';
+    if(ridx===idx) cls='active';
+    return `<div class="choose-card ${cls}" data-i="${ridx}">
+      <div class="choose-card-img">
+        <div class="choose-ring"><div class="sticker">${sp.img?`<img src="${sp.img}" alt="${sp.en}">`:iconPlant(sp.id)}</div></div>
+        <div class="choose-grass"><i style="left:14px"></i><i class="p" style="left:46px"></i><i class="f" style="left:78px"></i><i style="left:112px"></i><i class="p" style="left:150px"></i><i class="f" style="left:186px"></i><i style="left:222px"></i><i class="p" style="left:256px"></i></div>
+      </div>
+      <div class="choose-card-body">
+        <div class="choose-card-name">${sp.name}<span class="choose-card-leaf"><svg viewBox="0 0 24 24"><path d="M20 4c1 9-4 15-12 15 0-9 4-14 12-15z" fill="#4caf50"/><path d="M8 19c3-5 7-9 11-11" stroke="#2e7d32" stroke-width="1.3" fill="none" opacity=".55"/></svg></span></div>
+        <div class="choose-card-rar">${sp.rare?'稀有':'普通'}</div>
+        <div class="choose-card-desc">${sp.desc||'适合开始记录你的自然'}</div>
+        <div class="choose-card-cta" onclick="choosePlant('${sp.id}')">
+          <span class="choose-cta-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="#fff"><path d="M20 4c1 9-4 15-12 15 0-9 4-14 12-15z"/></svg></span>带它回家
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  $('dots').innerHTML=Array.from({length:len},(_,k)=>`<button class="choose-dot ${k===idx?'active':''}" data-go="${k}" aria-label="${k+1}"></button>`).join('');
+  $('dots').onclick=e=>{
+    const d=e.target.closest('.choose-dot');if(!d)return;
+    const len=BASIC_LEN(), k=+d.dataset.go, cur=carCur();
+    let delta=k-cur; if(delta>len/2)delta-=len; if(delta<-len/2)delta+=len;  /* 取最短路径 */
+    carGo(carPos+delta);
+  };
+  carPos=BASIC_LEN()+idx;            /* 落中圈对应位置 */
+  syncChoose(false);
+}
+/* ---------- 选择页轮播：循环轨道（三圈） ----------
+   用「连续位置」carPos 驱动，滑动方向永远正确（左滑=下一张，右滑=上一张）；
+   三圈轨道铺满后，越过中圈边界时在动画结束后无声瞬移回中圈同一视觉位置，
+   因此可无限左右循环，且动画期间再次滑动会就地接管、不会卡住 */
+const BASIC_LEN=()=>SP.filter(s=>s.unlock<=1).length;
+const CAR_ANIM=380;
+let carPos=BASIC_LEN();              /* 当前居中卡片在轨道中的连续位置（起始落中圈） */
+let carAnimEnd=0;                     /* 本次动画结束时间戳，用于判断是否可打断 */
+function carStep(){
+  const cs=$('track').children;
+  if(cs.length>1)return cs[1].offsetLeft-cs[0].offsetLeft;
+  return 0;
+}
+function carCardW(){
+  const c=$('track').children[0];
+  return c?c.offsetWidth:0;
+}
+/* 把第 idx 张卡（0 基，含圈数）居中所需的 translateX */
+function carOffset(idx){
+  const step=carStep(), cardW=carCardW();
+  const outerW=$('car').clientWidth||340;
+  return (outerW-cardW)/2-idx*step;
+}
+function carCur(){const len=BASIC_LEN();return ((carPos%len)+len)%len;}
+/* 同步位置 / 卡片类名 / 圆点；animate=false 时立即定位（无过渡） */
+function syncChoose(animate){
+  const cur=carCur(), t=$('track');
+  const target=carOffset(carPos);
+  if(animate){
+    t.style.transition='';
+    t.style.transform=`translateX(${target}px)`;
+    carAnimEnd=performance.now()+CAR_ANIM;
+  }else{
+    t.style.transition='none';
+    t.style.transform=`translateX(${target}px)`;
+    void t.offsetWidth;
+    t.style.transition='';
+    carAnimEnd=0;
+  }
+  t.querySelectorAll('.choose-card').forEach(c=>{
+    const i=+c.dataset.i;
+    c.classList.toggle('active',i===cur);
+    c.classList.toggle('side-left',i<cur);
+    c.classList.toggle('side-right',i>cur);
+  });
+  $('dots').querySelectorAll('.choose-dot').forEach((d,k)=>d.classList.toggle('active',k===cur));
+}
+/* 跳转到目标连续位置：动画走正确方向，越界后无声瞬移回中圈保持循环 */
+function carGo(toPos){
+  carPos=toPos;
+  const len=BASIC_LEN(), cur=carCur();
+  S.choose=cur; save();
+  const scheduled=carPos, willWrap=carPos>=2*len||carPos<len;
+  syncChoose(true);
+  if(willWrap){
+    setTimeout(()=>{
+      if(carPos!==scheduled)return;              /* 期间用户又滑动，作废本次归位 */
+      if(carPos>=2*len)carPos-=len; else if(carPos<len)carPos+=len;
+      const t=$('track');
+      t.style.transition='none';
+      t.style.transform=`translateX(${carOffset(carPos)}px)`;
+      void t.offsetWidth; t.style.transition='';
+    },CAR_ANIM+40);
+  }
+}
+/* 手势：跟手拖动 + 松手吸附（可中途打断上滑动画，手感连续） */
+(function(){
+  let down=false, x0=0, baseX=0, moved=0;
+  const t=$('track'), car=$('car');
+  const readX=()=>{const m=new DOMMatrixReadOnly(getComputedStyle(t).transform);return m.m41||0;};
+  const setX=(x,anim)=>{
+    t.style.transition=anim?`transform ${CAR_ANIM}ms cubic-bezier(.32,.72,0,1)`:'none';
+    t.style.transform=`translateX(${x}px)`;
+  };
+  car.addEventListener('pointerdown',e=>{
+    down=true; x0=e.clientX; moved=0; baseX=readX();
+    carAnimEnd=0;                                   /* 允许打断进行中的动画 */
+    const len=BASIC_LEN();
+    if(carPos>=2*len||carPos<len){                   /* 抓取前若已越界，先无声归位中圈 */
+      if(carPos>=2*len)carPos-=len; else carPos+=len;
+      t.style.transition='none';
+      t.style.transform=`translateX(${carOffset(carPos)}px)`;
+    }
+    t.style.transition='none';
+  });
+  car.addEventListener('pointermove',e=>{
+    if(!down)return;
+    const dx=e.clientX-x0; moved=dx;
+    setX(baseX+dx*.92,false);                        /* 跟手（略微阻尼，更像原生） */
+  });
+  const finish=()=>{
+    if(!down)return; down=false;
+    const len=BASIC_LEN(), step=carStep()||1, dx=moved;
+    if(Math.abs(dx)>60||Math.abs(dx)/step>.22){      /* 位移或速度任一达标即翻页 */
+      carGo(carPos+(dx<0?1:-1));                     /* 左滑=下一张(pos+1)，右滑=上一张 */
+    }else{
+      syncChoose(true);                              /* 归位 */
+    }
+    moved=0;
+  };
+  car.addEventListener('pointerup',finish);
+  car.addEventListener('pointercancel',finish);
+  car.addEventListener('pointerleave',finish);
+})();
+
+function refresh(){
+  const sp=spOf(S.species), st=stageInfo(S.total), p=prog();
+  $('plantEn').textContent=sp.name;
+  $('plantSt').textContent=st.zh;
+  showChat();
+  $('tdN').textContent=Math.min(todayRecs().length,9);
+  $('stageName').textContent=st.zh+' · '+sp.name;
+  /* 唯一进度条：6 阶段分段填充（已走过的阶段整段填色，当前阶段按阶段内进度填充） */
+  $('stageDots').innerHTML=STAGES.map((_,k)=>{
+    const w=k<st.i?100:(k===st.i?Math.round(st.pct*100):0);
+    return `<i class="${k<st.i?'done':(k===st.i?'cur':'')}"><b style="width:${w}%"></b></i>`;
+  }).join('');
+  $('stageNext').textContent=st.next?`下一阶段「${st.next}」· 还需 ${st.need} 光合`:'已成熟 · 去图鉴领取收获';
+  if($('actWaterT'))$('actWaterT').textContent=S.today.waterMl?S.today.waterMl+' ml':'记一杯';
+  if(!walkTimer&&$('actWalkT'))$('actWalkT').textContent = S.today.walkMin?S.today.walkMin+' 分钟':'点击开始';
+  if($('walkState'))$('walkState').classList.toggle('on',!!walkTimer);
+  if($('actWalk'))$('actWalk').classList.toggle('live',!!walkTimer);
+  if(!sunTimer&&$('actSunT'))$('actSunT').textContent = S.today.sunMin?S.today.sunMin+' 分钟':'点击开始';
+  if($('sunSession'))$('sunSession').style.display = sunTimer?'block':'none';
+  try{window.__setGrowth&&window.__setGrowth(p)}catch(e){}
+}
+window.resetData=()=>{if(!confirm('清空演示数据？'))return;const api=S.api;S=load();S.api=api;save();refresh();toast('已重置')};
+window.saveApi=()=>{S.api.key=$('apiKey').value.trim();S.api.model=$('apiModel').value.trim()||API_DEF.model;save();updateApi();toast('已保存')};
+function updateApi(){S.api=S.api||{...API_DEF};if($('apiKey'))$('apiKey').value=S.api.key||'';if($('apiModel'))$('apiModel').value=S.api.model||API_DEF.model;if($('aiState'))$('aiState').textContent=(S.api.key&&S.api.key.length>8)?'已启用硅基流动':'未配置 Key，模拟打分'}
+
+/* ---------- 我的页 / 设备 ---------- */
+const DEVICES={
+  apple:{name:'Apple Watch',desc:'日光时间 · 步数 · 睡眠 · 饮水',ico:'<rect x="7" y="3" width="10" height="18" rx="3" stroke="#0c3318" stroke-width="2" fill="none"/><path d="M9 3V1.5M15 3V1.5M9 21v-1.5M15 21v-1.5" stroke="#0c3318" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="#ffb547"/>'},
+  huawei:{name:'华为手表 / 手环',desc:'步数 · 睡眠',ico:'<rect x="7" y="3" width="10" height="18" rx="4" stroke="#0c3318" stroke-width="2" fill="none"/><path d="M10 10l2 2 2-4" stroke="#3d9a55" stroke-width="2" fill="none"/>'},
+  mi:{name:'小米 / Amazfit',desc:'步数（Zepp 接入）',ico:'<circle cx="12" cy="12" r="8" stroke="#0c3318" stroke-width="2" fill="none"/><rect x="9" y="10" width="6" height="4" rx="1" fill="#ff6900"/>'},
+  none:{name:'手动模式',desc:'暂不连接，完整体验所有玩法',ico:'<circle cx="12" cy="12" r="8" stroke="#9aa" stroke-width="2" fill="none"/><path d="M8 12h8" stroke="#9aa" stroke-width="2"/>'}
+};
+function renderDevice(){
+  $('devIcoA').innerHTML='<svg viewBox="0 0 24 24">'+DEVICES.apple.ico+'</svg>';
+  $('devIcoH').innerHTML='<svg viewBox="0 0 24 24">'+DEVICES.huawei.ico+'</svg>';
+  $('devIcoM').innerHTML='<svg viewBox="0 0 24 24">'+DEVICES.mi.ico+'</svg>';
+  $('devIcoN').innerHTML='<svg viewBox="0 0 24 24">'+DEVICES.none.ico+'</svg>';
+  $('devState').textContent = S.device ? (S.device.id==='none'?'当前：手动模式（未连接设备）':'当前已连接：'+S.device.name) : '尚未连接任何设备';
+}
+window.connectDev=id=>{
+  const d=DEVICES[id];
+  S.device = id==='none' ? {id:'none',name:d.name} : {id,name:d.name,connected:true};
+  S.onboarded=true;save();renderDevice();closeSub();
+  toast(id==='none'?'已选择手动模式':'已连接 '+d.name+'（演示）');
+};
+function renderProfile(){
+  if($('profAva')&&!$('profAva').innerHTML)$('profAva').innerHTML='<svg viewBox="0 0 24 24">'+iconPlant(S.species)+'</svg>';
+  if($('nickIn'))$('nickIn').value=S.name||'自然爱好者';
+  const lv=1+Math.floor(S.xp/50);
+  if($('pLvl'))$('pLvl').textContent=lv;
+  if($('pXp'))$('pXp').textContent=S.xp;
+  if($('pTotal'))$('pTotal').textContent=S.total;
+  if($('pBonus'))$('pBonus').textContent=(S.today.bonus||0)+'/'+DAILY_BONUS_CAP;
+  if($('profSub'))$('profSub').textContent='正在养：'+spOf(S.species).name+' · '+stageInfo(S.total).zh;
+  const dc=$('devCard');
+  if(dc)dc.innerHTML = S.device
+    ? `<div class="pair" style="box-shadow:none;border:1px solid #f0efe8;margin-bottom:0"><div class="pico"><svg viewBox="0 0 24 24">${DEVICES[S.device.id]?.ico||DEVICES.none.ico}</svg></div><div class="ptxt"><b>${S.device.name}</b><p>${S.device.id==='none'?'未连接 · 手动模式':'已连接 · 数据自动同步'}</p></div></div>`
+    : '<div class="muted">尚未连接设备 · 连接后晒太阳/散步/睡眠自动同步</div>';
+  updateApi();
+}
+window.saveNick=()=>{S.name=($('nickIn').value||'自然爱好者').trim();save();toast('昵称已保存')};
+window.toggleSound=()=>{S.sound=!S.sound;$('swSound').classList.toggle('on',S.sound);save();toast(S.sound?'音效已开启':'音效已关闭')};
+window.claim=()=>{S.reward=true;save();toast('已领取');closeSheet();openSub('s-collection')};
+
+// 启动
+renderChoose(); refresh(); renderRems(); renderActs(); renderHomeActs();
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+const canvas=document.getElementById('plant3d');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
+renderer.setClearAlpha(0);
+if(THREE.SRGBColorSpace) renderer.outputColorSpace=THREE.SRGBColorSpace;
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(40,1,0.02,40);
+const controls=new OrbitControls(camera,canvas);
+controls.enableDamping=true; controls.enablePan=false;
+controls.minAzimuthAngle=-Infinity; controls.maxAzimuthAngle=Infinity;
+controls.minPolarAngle=THREE.MathUtils.degToRad(42);
+controls.maxPolarAngle=THREE.MathUtils.degToRad(88);
+scene.add(new THREE.AmbientLight(0xffffff,0.88));
+const key=new THREE.DirectionalLight(0xfff2d0,2.2); key.position.set(1.5,3,2); scene.add(key);
+scene.add(new THREE.DirectionalLight(0xc8e8ff,0.7).translateX(-2));
+function fit(){const w=canvas.clientWidth||320,h=canvas.clientHeight||360;renderer.setSize(w,h,false);camera.aspect=w/Math.max(h,1);camera.updateProjectionMatrix()}
+new ResizeObserver(fit).observe(canvas.parentElement||canvas); fit();
+let mixer=null,clip=null,action=null,center=new THREE.Vector3(0,0.5,0),tg=0,sg=0,baseDist=0,corners=[],plantH=1,plantW=1;
+/* 点击植物 → 微风轻拂式晃动：以植物底部为轴心的摆动枢轴 */
+let plantModel=null, swayPivot=null, swayT=-1, swayAmp=.075;
+/* 生长映射：进度 0 也从「冒出小绿芽」开始，而不是空花盘 */
+const GROW_FROM=0.08;
+function anim(p){if(!action||!clip)return;action.paused=true;action.time=(GROW_FROM+(1-GROW_FROM)*p)*clip.duration;mixer.update(0)}
+window.__setGrowth=p=>{tg=p};
+new GLTFLoader().load('app_assets/strawberry_anim.glb',g=>{
+  const m=g.scene; plantModel=m; scene.add(m);
+  mixer=new THREE.AnimationMixer(m);
+  clip=g.animations&&g.animations[0];
+  if(clip){action=mixer.clipAction(clip);action.play();action.paused=true}
+  anim(0.5); m.updateMatrixWorld(true);
+  const box=new THREE.Box3().setFromObject(m);
+  const c=box.getCenter(new THREE.Vector3()), s=box.getSize(new THREE.Vector3());
+  center.copy(c); controls.target.copy(center);
+  /* 摆动枢轴：置于植物底部中心，模型反向偏移抵消 → 零旋转时世界位置不变 */
+  swayPivot=new THREE.Group();
+  swayPivot.position.set(c.x, box.min.y, c.z);
+  scene.add(swayPivot); swayPivot.add(m);
+  m.position.set(-c.x, -box.min.y, -c.z);
+  plantH=Math.max(s.y,.2); plantW=Math.max(s.x,.2);
+  const rad=Math.max(s.y,s.x,s.z,.4)*.5;
+  const d0=Math.min(3.6,Math.max(2.4,rad*4.0));
+  camera.position.set(c.x,c.y+rad*.35,c.z+d0*1.55); camera.lookAt(c);
+  /* 缩放区间：基准已后撤，植物只占屏幕约 7~8 成；最大放大限制为基准的 1.08 倍，绝不充满全屏 */
+  baseDist=camera.position.distanceTo(c);
+  controls.minDistance=baseDist/1.08;
+  controls.maxDistance=baseDist/0.5;
+  /* 记录模型包围盒 8 角点，用于把太阳徽章锚在 1.2 倍最大缩放边界旁 */
+  corners=[];
+  const hx=s.x/2,hy=s.y/2,hz=s.z/2;
+  for(const ax of[-1,1])for(const ay of[-1,1])for(const az of[-1,1])
+    corners.push(new THREE.Vector3(c.x+ax*hx,c.y+ay*hy,c.z+az*hz));
+  placeSun();                                     // 模型就绪后立即定锚：位置此后固定
+},undefined,e=>console.warn(e));
+const clock=new THREE.Clock();
+/* ---------- 点击植物：微风轻拂式晃动 ---------- */
+const ray=new THREE.Raycaster(), ndc=new THREE.Vector2();
+let tapX=0, tapY=0, tapT=0;
+canvas.addEventListener('pointerdown',e=>{tapX=e.clientX;tapY=e.clientY;tapT=performance.now()});
+canvas.addEventListener('pointerup',e=>{
+  if(!plantModel)return;
+  const moved=Math.hypot(e.clientX-tapX,e.clientY-tapY);
+  const dt=performance.now()-tapT;
+  if(moved>10||dt>400)return;                       // 拖拽/长按视为转视角，不触发
+  const r=canvas.getBoundingClientRect();
+  ndc.set(((e.clientX-r.left)/r.width)*2-1, -((e.clientY-r.top)/r.height)*2+1);
+  ray.setFromCamera(ndc,camera);
+  if(ray.intersectObject(plantModel,true).length){ startSway(); showTapHand(e.clientX,e.clientY); }
+});
+/* 点击植物出现的半透明手指（占位素材，后续可替换为真实手部 PNG 序列） */
+function showTapHand(x,y){
+  const h=$('tapHand'); if(!h)return;
+  h.style.left=x+'px'; h.style.top=y+'px';
+  h.classList.remove('show'); void h.offsetWidth; h.classList.add('show');
+}
+function startSway(){
+  if(!swayPivot)return;
+  swayT=0; swayAmp=.06+Math.random()*.03;           // 每次幅度略有差异，更自然
+  if(window.__swayAck)window.__swayAck();
+}
+window.__sway=()=>startSway();
+window.__swayDebug=()=>({t:+swayT.toFixed(2),rz:swayPivot?+swayPivot.rotation.z.toFixed(4):null,rx:swayPivot?+swayPivot.rotation.x.toFixed(4):null,pivotY:swayPivot?+swayPivot.position.y.toFixed(3):null});
+function updateSway(dt){
+  if(swayT<0||!swayPivot)return;
+  swayT+=dt;
+  const dur=1.9, p=swayT/dur;
+  if(p>=1){                                         // 结束：平滑归位
+    swayT=-1; swayPivot.rotation.set(0,0,0); return;
+  }
+  const decay=Math.pow(1-p,1.7);                    // 递减衰减，像被风拂过后慢慢静止
+  const w=p*Math.PI*7;
+  swayPivot.rotation.z = swayAmp*decay*Math.sin(w);
+  swayPivot.rotation.x = swayAmp*.55*decay*Math.sin(w*.8+0.7);
+}
+/* 太阳徽章：固定在植物最大缩放（1.1 倍）边界的右上角旁一点点。
+   只在模型就绪/窗口尺寸变化时计算一次，不随缩放或旋转移动，
+   因此任何缩放下植物都不会超过 1.1 倍边界，也就不会与太阳重叠 */
+const sunEl=document.getElementById('sunBadge'),vTmp=new THREE.Vector3();
+function placeSun(){
+  if(!corners.length)return;
+  const w=canvas.clientWidth,h=canvas.clientHeight;
+  let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;
+  for(const p of corners){
+    vTmp.copy(p).project(camera);
+    const x=(vTmp.x*.5+.5)*w,y=(-vTmp.y*.5+.5)*h;
+    if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;
+  }
+  const f=1.1;                                    // 固定按 1.1 倍最大缩放边界取位
+  const cx=(x0+x1)/2,cy=(y0+y1)/2,hw=(x1-x0)/2*f,hh=(y1-y0)/2*f;
+  let bx=cx+hw+30,by=cy-hh+24;                    // 右上角外扩一点点
+  bx=Math.min(Math.max(bx,34),w-34);by=Math.min(Math.max(by,64),h-40);
+  if(by<120)bx=Math.min(bx,w-96);                  // 避开右上角头像区
+  sunEl.style.left=bx+'px';sunEl.style.top=by+'px';
+}
+new ResizeObserver(()=>placeSun()).observe(canvas);
+window.__camDebug=()=>({d:+camera.position.distanceTo(controls.target).toFixed(3),min:+controls.minDistance.toFixed(3),max:+controls.maxDistance.toFixed(3),base:+baseDist.toFixed(3)});
+/* 植物在屏幕上的视觉直径（给首页呼吸光环定尺寸用） */
+const _psBox=new THREE.Box3(),_psPts=[];
+window.__plantScreen=()=>{
+  const w=canvas.clientWidth,h=canvas.clientHeight;
+  let pts=null;
+  if(plantModel){                                   // 跟随植物当前实际大小（会随生长阶段变化）
+    _psBox.setFromObject(plantModel,true);   // precise：遍历顶点，反映骨骼形变后的真实大小
+    if(!_psBox.isEmpty()){
+      const mn=_psBox.min,mx=_psBox.max;
+      pts=[];
+      for(const ax of[mn.x,mx.x])for(const ay of[mn.y,mx.y])for(const az of[mn.z,mx.z])
+        pts.push(new THREE.Vector3(ax,ay,az));
+    }
+  }
+  if(!pts)pts=corners;
+  if(!pts.length)return 0;
+  let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;
+  for(const p of pts){
+    vTmp.copy(p).project(camera);
+    const x=(vTmp.x*.5+.5)*w,y=(-vTmp.y*.5+.5)*h;
+    if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;
+  }
+  return {w:x1-x0,h:y1-y0,cw:w,ch:h};
+};
+
+/* ---------- 3D 水壶浇水动画（替换原 2D 壶） ----------
+   新模型实测（2026-09 更新版）：壶嘴尖 (-1.9,1.65,0)，壶中心 (-0.11,1.16,0)，
+   壶嘴方向 ≈ (-0.96,0,+0.26)，上仰仅约 15°；壶把 +X 侧。
+   倾倒 = 绕 Z 正向旋转约 +1.1 rad，使壶嘴从 165° 方位转到约 227°（指向植物下左） */
+const canGroup=new THREE.Group(); canGroup.visible=false; scene.add(canGroup);
+let canModel=null, canBox=null, canSize=1;
+new GLTFLoader().load('app_assets/watering_can.glb',g=>{
+  canModel=g.scene;
+  /* 材质修复：GLB 里的 PBR 参数（金属度/粗糙度）会让壶身渲染发黑，
+     强制为陶瓷质感 + 明亮暖黄（与预期图一致） */
+  canModel.traverse(o=>{
+    if(o.isMesh){
+      (Array.isArray(o.material)?o.material:[o.material]).forEach(m=>{
+        if(!m)return;
+        m.metalness=.05; m.roughness=.55; m.side=THREE.DoubleSide;
+        if(!m.map) m.color=new THREE.Color(0xf6d34a);
+      });
+    }
+  });
+  canBox=new THREE.Box3().setFromObject(canModel);
+  canGroup.add(canModel);
+},undefined,e=>console.warn('水壶模型加载失败',e));
+
+const DROP_N=80;
+/* 水滴形剖面：下半球圆润 + 上方收尖成尾巴（尾巴朝上，迎向运动方向） */
+const dropGeo=(()=>{
+  const pts=[];
+  for(let i=0;i<=14;i++){
+    const t=i/14; let r;
+    if(t<.5) r=.5*Math.sqrt(1-Math.pow(1-2*t,2));   // 圆润底
+    else     r=.5*Math.pow(1-(t-.5)*2,1.4);          // 收尖尾
+    pts.push(new THREE.Vector2(Math.max(r,1e-4),t));
+  }
+  return new THREE.LatheGeometry(pts,12);
+})();
+const drops=[];
+for(let i=0;i<DROP_N;i++){
+  const mesh=new THREE.Mesh(dropGeo,new THREE.MeshBasicMaterial({color:0x7ec8ff,transparent:true,opacity:.92}));
+  mesh.visible=false; scene.add(mesh);
+  drops.push({m:mesh,life:-1,v:new THREE.Vector3()});
+}
+const POUR_IN=.45, POUR_HOLD=1.8, POUR_OUT=.4, POUR_TILT=1.1;
+let pourT=-1, spawnAcc=0, visHalfW=1, visHalfH=1;
+const pourPos=new THREE.Vector3();
+window.__pour3D=()=>{
+  if(!canModel||pourT>=0)return;
+  // 壶尺寸：约为植物高 60%，且不超过取景高度的 22%（保证完整在画面内）
+  const size=canBox.getSize(new THREE.Vector3());
+  canSize=Math.min(plantH*.6, baseDist*.16);
+  const k=canSize/Math.max(size.x,size.y,size.z);
+  canModel.scale.setScalar(k);
+  canModel.position.copy(canBox.getCenter(new THREE.Vector3()).multiplyScalar(k)).negate();
+  // 可视半宽/半高（世界单位，相机对准 center；直接用画布尺寸，避免 aspect 瞬时未同步）
+  visHalfH=Math.tan(THREE.MathUtils.degToRad(camera.fov/2))*baseDist;
+  visHalfW=visHalfH*canvas.clientWidth/Math.max(canvas.clientHeight,1);
+  // 锚定植物右上角外侧：壶嘴尖恰好悬在植物冠层上方；并钳制在画面内
+  pourPos.set(center.x+plantW*.35+canSize*.35, center.y+plantH*.42+canSize*.30, center.z);
+  pourPos.x=Math.min(pourPos.x, center.x+visHalfW-canSize*.55);
+  pourPos.y=Math.min(pourPos.y, center.y+visHalfH-canSize*.55);
+  /* 避开右上角头像：壶顶若进入头像区域，则把壶平移到头像左侧（高度不动，避免压到植物） */
+  const avEl=document.querySelector('.avatar-btn');
+  if(avEl){
+    const pxPerW=canvas.clientHeight/(2*visHalfH);
+    const r=avEl.getBoundingClientRect(), cr=canvas.getBoundingClientRect();
+    const avBot=center.y+visHalfH-(r.bottom-cr.top+8)/pxPerW;
+    const avLeft=center.x+(r.left-cr.left-8-canvas.clientWidth/2)/pxPerW;
+    if(pourPos.y+canSize*.55>avBot) pourPos.x=Math.min(pourPos.x,avLeft-canSize*.55);
+  }
+  pourT=0; spawnAcc=0;
+  canGroup.visible=true;
+  canGroup.rotation.z=0;
+  canGroup.position.copy(pourPos);
+};
+/* 壶嘴尖端（居中模型局部坐标）：(-1.79,0.49)/3.61 ≈ (-0.50,0.14)×canSize */
+function spoutWorld(){return canGroup.localToWorld(new THREE.Vector3(-canSize*.50,canSize*.14,0))}
+const _tipV=new THREE.Vector3(), _dirV=new THREE.Vector3(), _upV=new THREE.Vector3(0,1,0);
+function spawnDrop(){
+  const d=drops.find(x=>x.life<0); if(!d)return;
+  const p=spoutWorld();
+  d.m.position.copy(p).add(new THREE.Vector3((Math.random()-.5)*canSize*.05,(Math.random()-.5)*canSize*.03,(Math.random()-.5)*canSize*.06));
+  const s=canSize*(.030+Math.random()*.014);      // 单滴大小（清晰可见又不过大）
+  d.m.scale.set(s,s*1.35,s);
+  /* 散落水花：低速沿壶嘴喷出 + 横向抖动 → 缓慢分离的扇形水滴（参考插画效果） */
+  _dirV.copy(p).sub(canGroup.position).normalize();
+  const sp=plantH*(.28+Math.random()*.12);
+  d.v.copy(_dirV).multiplyScalar(sp);
+  d.v.x+=(Math.random()-.5)*plantH*.2;
+  d.v.z=(Math.random()-.5)*plantH*.08;
+  d.life=0; d.m.material.opacity=.85; d.m.visible=true;
+}
+function updatePour(dt){
+  if(pourT<0)return;
+  pourT+=dt;
+  const t=pourT, ease=x=>1-Math.pow(1-x,3);
+  if(t<POUR_IN){                                  // 入场：落到植物上方并倾倒
+    const p=ease(t/POUR_IN);
+    canGroup.rotation.z=POUR_TILT*p;
+    canGroup.position.y=pourPos.y+plantH*.3*(1-p);
+  }else if(t<POUR_IN+POUR_HOLD){                  // 保持倾倒 + 洒水（轻微晃动）
+    canGroup.rotation.z=POUR_TILT+Math.sin((t-POUR_IN)*9)*.03;
+    spawnAcc+=dt*13;                              // ~13 滴/秒（稀疏分离的水滴）
+    while(spawnAcc>=1){spawnAcc-=1;spawnDrop()}
+  }else if(t<POUR_IN+POUR_HOLD+POUR_OUT){         // 回正并收回（不越出画面顶部）
+    const p=ease((t-POUR_IN-POUR_HOLD)/POUR_OUT);
+    canGroup.rotation.z=POUR_TILT*(1-p);
+    canGroup.position.y=Math.min(pourPos.y+plantH*.35*p, center.y+visHalfH-canSize*.45);
+  }else{
+    pourT=-1; canGroup.visible=false;
+  }
+}
+function updateDrops(dt){
+  const g=plantH*1.6, floorY=center.y-plantH*.42;
+  for(const d of drops){
+    if(d.life<0)continue;
+    d.life+=dt;
+    d.v.y-=g*dt;
+    d.m.position.addScaledVector(d.v,dt);
+    /* 水滴姿态：圆头朝运动方向、尾巴朝后（+Y 是尾巴，反向速度对齐） */
+    if(d.v.lengthSq()>1e-6){
+      _tipV.copy(d.v).negate().normalize();
+      d.m.quaternion.setFromUnitVectors(_upV,_tipV);
+    }
+    if(d.m.position.y<=floorY||d.life>1.5){       // 落到植物/泥土处消失
+      d.m.visible=false; d.life=-1;
+    }else if(d.life>1.2){
+      d.m.material.opacity=.92*(1-(d.life-1.2)/.3);
+    }
+  }
+}
+window.__pourDebug=()=>({visible:canGroup.visible,t:+(pourT<0?-1:pourT).toFixed(2),activeDrops:drops.filter(d=>d.life>=0).length,plantH:+plantH.toFixed(2),plantW:+plantW.toFixed(2),canReady:!!canModel,grp:{x:+(canGroup.position.x-center.x).toFixed(3),y:+(canGroup.position.y-center.y).toFixed(3)},halfW:+visHalfW.toFixed(3),canSize:+canSize.toFixed(3),dropSample:drops.filter(d=>d.life>=0).slice(0,4).map(d=>({p:[+(d.m.position.x-center.x).toFixed(2),+(d.m.position.y-center.y).toFixed(2)],v:[+d.v.x.toFixed(2),+d.v.y.toFixed(2)],s:+d.m.scale.x.toFixed(3)}))});
+/* 壶屏幕包围盒（验证全程在画面内） */
+window.__canBox=()=>{
+  if(!canModel)return null;
+  const b=new THREE.Box3().setFromObject(canGroup), w=canvas.clientWidth, h=canvas.clientHeight;
+  const pr=v=>{const q=v.clone().project(camera);return [(q.x*.5+.5)*w,(-q.y*.5+.5)*h]};
+  const c1=pr(new THREE.Vector3(b.min.x,b.min.y,b.min.z)), c2=pr(new THREE.Vector3(b.max.x,b.max.y,b.max.z));
+  const x0=Math.min(c1[0],c2[0]),x1=Math.max(c1[0],c2[0]),y0=Math.min(c1[1],c2[1]),y1=Math.max(c1[1],c2[1]);
+  return {x0:Math.round(x0),x1:Math.round(x1),y0:Math.round(y0),y1:Math.round(y1),w,h,inside:x0>=0&&x1<=w&&y0>=0&&y1<=h};
+};
+
+(function loop(){requestAnimationFrame(loop);
+  const dt=Math.min(clock.getDelta(),.05);
+  /* 画布比例自愈：布局稳定导致 client 尺寸变化而 ResizeObserver 未触发时纠正 */
+  const cw=canvas.clientWidth,ch=canvas.clientHeight;
+  if(cw&&ch&&Math.abs(camera.aspect-cw/ch)>.01)fit();
+  sg+=(tg-sg)*.075;if(Math.abs(tg-sg)<.001)sg=tg;anim(sg);
+  controls.target.copy(center);controls.update();
+  updatePour(dt);updateDrops(dt);updateSway(dt);updateBreathe(dt);
+  renderer.render(scene,camera)})();
+</script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+- generic [ref=e2]:
+  - generic [ref=e5]:
+    - text: Choose
+    - generic [ref=e6]: Your Plant
+  - generic [ref=e7]:
+    - button "全部" [ref=e8] [cursor=pointer]
+    - button "花卉" [ref=e9] [cursor=pointer]
+    - button "果实" [ref=e10] [cursor=pointer]
+    - button "多肉" [ref=e11] [cursor=pointer]
+  - generic [ref=e13]:
+    - generic [ref=e14]:
+      - generic [ref=e18]: 12日8小时
+      - generic [ref=e28]:
+        - generic [ref=e29]: strawberry
+        - generic [ref=e34]: 适合新手，喝水就开心
+        - generic [ref=e35] [cursor=pointer]: Choose this partner
+    - generic [ref=e39]:
+      - generic [ref=e43]: 14日16小时
+      - generic [ref=e55]:
+        - generic [ref=e56]: sunflower
+        - generic [ref=e61]: 爱晒太阳，追着光长大
+        - generic [ref=e62] [cursor=pointer]: Choose this partner
+    - generic [ref=e66]:
+      - generic [ref=e70]: 9日4小时
+      - generic [ref=e77]:
+        - generic [ref=e78]: cactus
+        - generic [ref=e86]: 耐得住忙碌与干燥
+        - generic [ref=e87] [cursor=pointer]: Choose this partner
+    - generic [ref=e91]:
+      - generic [ref=e95]: 12日8小时
+      - generic [ref=e105]:
+        - generic [ref=e106]: strawberry
+        - generic [ref=e111]: 适合新手，喝水就开心
+        - generic [ref=e112] [cursor=pointer]: Choose this partner
+    - generic [ref=e116]:
+      - generic [ref=e120]: 14日16小时
+      - generic [ref=e132]:
+        - generic [ref=e133]: sunflower
+        - generic [ref=e138]: 爱晒太阳，追着光长大
+        - generic [ref=e139] [cursor=pointer]: Choose this partner
+    - generic [ref=e143]:
+      - generic [ref=e147]: 9日4小时
+      - generic [ref=e154]:
+        - generic [ref=e155]: cactus
+        - generic [ref=e163]: 耐得住忙碌与干燥
+        - generic [ref=e164] [cursor=pointer]: Choose this partner
+    - generic [ref=e168]:
+      - generic [ref=e172]: 12日8小时
+      - generic [ref=e182]:
+        - generic [ref=e183]: strawberry
+        - generic [ref=e188]: 适合新手，喝水就开心
+        - generic [ref=e189] [cursor=pointer]: Choose this partner
+    - generic [ref=e193]:
+      - generic [ref=e197]: 14日16小时
+      - generic [ref=e209]:
+        - generic [ref=e210]: sunflower
+        - generic [ref=e215]: 爱晒太阳，追着光长大
+        - generic [ref=e216] [cursor=pointer]: Choose this partner
+    - generic [ref=e220]:
+      - generic [ref=e224]: 9日4小时
+      - generic [ref=e231]:
+        - generic [ref=e232]: cactus
+        - generic [ref=e240]: 耐得住忙碌与干燥
+        - generic [ref=e241] [cursor=pointer]: Choose this partner
+  - generic [ref=e245]:
+    - button "种植这株伙伴" [ref=e246] [cursor=pointer]
+    - generic [ref=e247]:
+      - generic [ref=e248] [cursor=pointer]
+      - generic [ref=e251]:
+        - button [ref=e252] [cursor=pointer]
+        - button [ref=e253] [cursor=pointer]
+        - button [ref=e254] [cursor=pointer]
+  - generic [ref=e255]: 方案 B · 花苗图鉴卡

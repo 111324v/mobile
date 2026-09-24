@@ -1,0 +1,49 @@
+- generic [ref=e2]:
+  - generic [ref=e5]:
+    - generic [ref=e6]:
+      - text: Choose
+      - generic [ref=e7]: Your Plant
+    - generic [ref=e16]: Every time you walk toward the light,I grow a little taller than yesterday.
+  - generic [ref=e18]:
+    - generic [ref=e36]:
+      - generic [ref=e37]: strawberry
+      - generic [ref=e42]: 适合新手，喝水就开心
+      - generic [ref=e43] [cursor=pointer]: Choose this partner
+    - generic [ref=e66]:
+      - generic [ref=e67]: sunflower
+      - generic [ref=e72]: 爱晒太阳，追着光长大
+      - generic [ref=e73] [cursor=pointer]: Choose this partner
+    - generic [ref=e91]:
+      - generic [ref=e92]: cactus
+      - generic [ref=e100]: 耐得住忙碌与干燥
+      - generic [ref=e101] [cursor=pointer]: Choose this partner
+    - generic [ref=e122]:
+      - generic [ref=e123]: strawberry
+      - generic [ref=e128]: 适合新手，喝水就开心
+      - generic [ref=e129] [cursor=pointer]: Choose this partner
+    - generic [ref=e152]:
+      - generic [ref=e153]: sunflower
+      - generic [ref=e158]: 爱晒太阳，追着光长大
+      - generic [ref=e159] [cursor=pointer]: Choose this partner
+    - generic [ref=e177]:
+      - generic [ref=e178]: cactus
+      - generic [ref=e186]: 耐得住忙碌与干燥
+      - generic [ref=e187] [cursor=pointer]: Choose this partner
+    - generic [ref=e208]:
+      - generic [ref=e209]: strawberry
+      - generic [ref=e214]: 适合新手，喝水就开心
+      - generic [ref=e215] [cursor=pointer]: Choose this partner
+    - generic [ref=e238]:
+      - generic [ref=e239]: sunflower
+      - generic [ref=e244]: 爱晒太阳，追着光长大
+      - generic [ref=e245] [cursor=pointer]: Choose this partner
+    - generic [ref=e263]:
+      - generic [ref=e264]: cactus
+      - generic [ref=e272]: 耐得住忙碌与干燥
+      - generic [ref=e273] [cursor=pointer]: Choose this partner
+  - generic [ref=e277]:
+    - button [ref=e278] [cursor=pointer]
+    - button [ref=e279] [cursor=pointer]
+    - button [ref=e280] [cursor=pointer]
+  - generic [ref=e281] [cursor=pointer]
+  - generic [ref=e284]: 方案 A · 花园贴纸卡

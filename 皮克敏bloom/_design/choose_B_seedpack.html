@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<link rel="icon" href="data:,">
+<title>选择植物 · 方案B 花苗图鉴卡</title>
+<style>
+:root{
+  --sky-1:#d7ecf8; --sky-2:#e6f4ea; --mint:#eef8ef;
+  --ink:#16412a; --green:#2ea44f; --green-dp:#1e7a39; --pink:#f8bbd0;
+  --paper:#fff; --muted:#8a968d; --leaf:#4caf50;
+  --r-xl:26px; --r-md:14px; --r-round:999px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:#0e1a12;display:grid;place-items:center;font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;padding:16px}
+.phone{width:390px;height:min(844px,calc(100vh - 32px));border-radius:44px;overflow:hidden;position:relative;
+  box-shadow:0 30px 80px rgba(0,0,0,.55);border:10px solid #101312;background:var(--sky-1);display:flex;flex-direction:column}
+/* 背景：极简天蓝→薄荷 */
+.bg{position:absolute;inset:0;background:linear-gradient(180deg,var(--sky-1) 0%,var(--sky-2) 55%,var(--mint) 100%)}
+.hd{position:relative;z-index:5;padding:clamp(38px,6.4vh,60px) 28px 6px}
+.h1{font-size:38px;font-weight:400;color:var(--ink);line-height:1.12;letter-spacing:-1px}
+.h1 b{display:block;font-weight:900}
+/* 分类 Tab：未选中灰字，选中绿色胶囊 */
+.tabs{position:relative;z-index:5;display:flex;gap:8px;padding:14px 22px 0}
+.tab{border:0;background:transparent;color:#9aa69d;font-size:13px;font-weight:700;padding:7px 14px;border-radius:var(--r-round);cursor:pointer}
+.tab.on{background:var(--green);color:#fff;box-shadow:0 4px 12px rgba(46,164,79,.3)}
+/* 轮播 */
+.carousel{flex:1;display:flex;flex-direction:column;justify-content:center;overflow:hidden;position:relative;z-index:5;
+  padding-top:10px;touch-action:pan-y;cursor:grab;user-select:none}
+.carousel:active{cursor:grabbing}
+.track{display:flex;gap:14px;padding:14px 0 18px;transition:transform .38s cubic-bezier(.32,.72,0,1);will-change:transform}
+/* 种子包卡片：白底 + 粉细双描边 + 左上芽标 */
+.card{width:290px;flex-shrink:0;background:var(--paper);border-radius:var(--r-xl);
+  border:2px solid var(--pink);outline:2px solid #fff;outline-offset:-6px;
+  box-shadow:0 14px 40px rgba(0,0,0,.16);overflow:hidden;position:relative;transition:transform .38s ease,opacity .38s ease}
+.card.active{transform:scale(1);opacity:1;z-index:3;box-shadow:0 0 0 3px var(--green),0 18px 44px rgba(46,164,79,.24)}
+.card.side-left{transform:scale(.8) rotate(9deg);opacity:.62;z-index:1;transform-origin:right center}
+.card.side-right{transform:scale(.8) rotate(-9deg);opacity:.62;z-index:1;transform-origin:left center}
+/* 芽标 */
+.sprout{position:absolute;left:12px;top:12px;width:30px;height:30px;border-radius:var(--r-round);background:#eaf7e6;
+  display:grid;place-items:center;z-index:2;box-shadow:0 2px 6px rgba(0,0,0,.1)}
+.sprout svg{width:18px;height:18px}
+/* 图像区 */
+.art{width:calc(100% - 24px);height:clamp(108px,15.5vh,170px);margin:12px 12px 0;border-radius:var(--r-md);position:relative;
+  background:linear-gradient(165deg,#e9f7ee,#f4faf3);display:grid;place-items:center;overflow:hidden}
+.art svg{width:clamp(80px,12vh,118px);height:clamp(80px,12vh,118px);filter:drop-shadow(0 6px 10px rgba(0,0,0,.16))}
+/* 倒计时 chip（右下角） */
+.cd{position:absolute;right:10px;bottom:10px;background:rgba(255,255,255,.94);border-radius:var(--r-round);
+  padding:4px 10px;font-size:11px;font-weight:800;color:var(--green-dp);box-shadow:0 3px 8px rgba(0,0,0,.12)}
+.cd small{font-weight:600;color:var(--muted);margin:0 1px}
+/* 卡体 */
+.body{padding:12px 18px 16px;display:flex;flex-direction:column;align-items:center;gap:5px}
+.name{font-size:22px;font-weight:800;color:var(--green-dp);letter-spacing:-.5px}
+.leaves{display:flex;gap:2px;margin-top:1px}
+.leaves svg{width:13px;height:13px}
+.desc{font-size:12px;color:var(--muted);line-height:1.5;text-align:center}
+/* CTA：黑胶囊 + 绿圆箭头（图鉴原稿感） */
+.cta{margin-top:6px;width:100%;background:#1a1a1a;border-radius:var(--r-round);padding:13px 20px;
+  display:flex;align-items:center;justify-content:center;gap:10px;color:#fff;font-size:14px;font-weight:800;cursor:pointer;transition:transform .15s}
+.cta:active{transform:scale(.97)}
+.cta .arrow{width:24px;height:24px;border-radius:var(--r-round);background:var(--leaf);display:grid;place-items:center}
+/* 底部主按钮 + 分页 + 返回圆钮 */
+.foot{position:relative;z-index:5;padding:0 22px clamp(16px,3vh,30px);display:flex;flex-direction:column;gap:clamp(9px,1.6vh,14px)}
+.main{width:100%;background:var(--green);color:#fff;border:0;border-radius:var(--r-round);padding:15px;
+  font-size:15px;font-weight:800;box-shadow:0 8px 20px rgba(46,164,79,.32);cursor:pointer}
+.main:active{transform:scale(.98)}
+.btmrow{display:flex;align-items:center;justify-content:center;gap:10px;position:relative}
+.dots{display:flex;align-items:center;gap:8px}
+.dot{height:8px;border-radius:4px;background:rgba(22,65,42,.22);border:0;padding:0;cursor:pointer;transition:all .3s}
+.dot.active{width:24px;background:var(--green)}
+.dot:not(.active){width:8px}
+.back{position:absolute;left:0;width:40px;height:40px;border-radius:var(--r-round);background:rgba(255,255,255,.94);
+  display:grid;place-items:center;box-shadow:0 6px 16px rgba(0,0,0,.14);cursor:pointer}
+.hint{position:absolute;left:0;right:0;bottom:4px;text-align:center;font-size:11px;color:#2f6b3c;opacity:.75;z-index:6}
+</style></head>
+<body>
+<div class="phone">
+  <div class="bg"></div>
+
+  <div class="hd">
+    <div class="h1">Choose<b>Your Plant</b></div>
+  </div>
+  <div class="tabs">
+    <button class="tab on">全部</button><button class="tab">花卉</button><button class="tab">果实</button><button class="tab">多肉</button>
+  </div>
+
+  <div class="carousel" id="car"><div class="track" id="track"></div></div>
+
+  <div class="foot">
+    <button class="main">种植这株伙伴</button>
+    <div class="btmrow">
+      <div class="back"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16412a" stroke-width="2.4"><path d="M15 5l-7 7 7 7"/></svg></div>
+      <div class="dots" id="dots"></div>
+    </div>
+  </div>
+  <div class="hint">方案 B · 花苗图鉴卡</div>
+</div>
+
+<script>
+const SP=[
+  {id:'strawberry',en:'Strawberry',desc:'适合新手，喝水就开心',leaves:1,days:12,hours:8},
+  {id:'sunflower', en:'Sunflower', desc:'爱晒太阳，追着光长大',leaves:1,days:14,hours:16},
+  {id:'cactus',    en:'Cactus',    desc:'耐得住忙碌与干燥',    leaves:2,days:9, hours:4},
+];
+const LEAF='<svg viewBox="0 0 24 24"><path d="M20 4c1 9-4 15-12 15 0-9 4-14 12-15z" fill="#4caf50"/><path d="M8 19c3-5 7-9 11-11" stroke="#2e7d32" stroke-width="1.3" fill="none" opacity=".55"/></svg>';
+const SPROUT='<svg viewBox="0 0 24 24" fill="none"><path d="M12 20v-7" stroke="#2f7d45" stroke-width="2" stroke-linecap="round"/><path d="M12 13c5-1 8-5 7-9-5 0-8 4-7 9z" fill="#6fcf7a"/></svg>';
+const ART={
+  strawberry:'<circle cx="12" cy="13" r="7.4" fill="#e05252"/><path d="M12 5.6c1.6-2.4 4.4-3.2 6.6-2.4" stroke="#3d9a55" stroke-width="2" fill="none" stroke-linecap="round"/><g fill="#ffd9a0"><circle cx="9.5" cy="12" r="1"/><circle cx="14.5" cy="12" r="1"/><circle cx="12" cy="16" r="1"/></g>',
+  sunflower:'<circle cx="12" cy="13" r="4" fill="#8b5a2b"/><g fill="#ffd84d"><circle cx="12" cy="5.5" r="2.6"/><circle cx="18" cy="9" r="2.6"/><circle cx="18" cy="16" r="2.6"/><circle cx="12" cy="20.5" r="2.6"/><circle cx="6" cy="16" r="2.6"/><circle cx="6" cy="9" r="2.6"/></g>',
+  cactus:'<rect x="10" y="6" width="4" height="13" rx="2" fill="#3d9a55"/><rect x="5" y="10" width="4" height="6" rx="2" fill="#6fcf7a"/><rect x="15" y="8" width="4" height="5" rx="2" fill="#6fcf7a"/><path d="M7 19h10" stroke="#c96a00" stroke-width="2.4" stroke-linecap="round"/>'
+};
+const st=k=>'<svg viewBox="0 0 24 24"><g stroke="#fff" stroke-width="1.4" stroke-linejoin="round" paint-order="stroke">'+(ART[k]||ART.strawberry)+'</g></svg>';
+const $=id=>document.getElementById(id);
+const len=SP.length; let cur=0;
+
+function render(){
+  const order=Array.from({length:len*3},(_,k)=>k%len);
+  $('track').innerHTML=order.map(i=>{
+    const s=SP[i];
+    return `<div class="card" data-i="${i}">
+      <div class="sprout">${SPROUT}</div>
+      <div class="art">${st(s.id)}<div class="cd">${s.days}<small>日</small>${s.hours}<small>小时</small></div></div>
+      <div class="body">
+        <div class="name">${s.en.toLowerCase()}</div>
+        <div class="leaves">${LEAF.repeat(s.leaves)}</div>
+        <div class="desc">${s.desc}</div>
+        <div class="cta"><span class="arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>Choose this partner</div>
+      </div>
+    </div>`;
+  }).join('');
+  $('dots').innerHTML=Array.from({length:len},(_,k)=>`<button class="dot${k===cur?' active':''}" data-go="${k}"></button>`).join('');
+  $('dots').onclick=e=>{const d=e.target.closest('.dot');if(d)go(+d.dataset.go)};
+  sync(false);
+}
+function step(){const cs=$('track').children;return cs.length>1?cs[1].offsetLeft-cs[0].offsetLeft:0}
+function cardW(){const c=$('track').children[0];return c?c.offsetWidth:0}
+function offset(idx){return ($('car').clientWidth-cardW())/2-idx*step()}
+function sync(animate){
+  const t=$('track'),target=offset(cur+len);
+  if(animate){t.style.transition='';t.style.transform=`translateX(${target}px)`}
+  else{t.style.transition='none';t.style.transform=`translateX(${target}px)`;void t.offsetWidth;t.style.transition=''}
+  t.querySelectorAll('.card').forEach(c=>{
+    const i=+c.dataset.i;
+    c.classList.toggle('active',i===cur);
+    c.classList.toggle('side-left',i<cur);
+    c.classList.toggle('side-right',i>cur);
+  });
+  $('dots').querySelectorAll('.dot').forEach((d,k)=>d.classList.toggle('active',k===cur));
+}
+function go(i){cur=((i%len)+len)%len;sync(true)}
+(function(){
+  let down=false,x0=0,base=0,moved=0;
+  const t=$('track'),car=$('car');
+  const readX=()=>{try{return new DOMMatrixReadOnly(getComputedStyle(t).transform).m41||0}catch(e){return 0}};
+  car.addEventListener('pointerdown',e=>{down=true;x0=e.clientX;moved=0;base=readX();t.style.transition='none'});
+  car.addEventListener('pointermove',e=>{if(!down)return;moved=e.clientX-x0;t.style.transform=`translateX(${base+moved*.92}px)`});
+  const fin=()=>{if(!down)return;down=false;const dx=moved;
+    if(Math.abs(dx)>60||Math.abs(dx)/(step()||1)>.22)go(cur+(dx<0?1:-1)); else sync(true);moved=0};
+  car.addEventListener('pointerup',fin);car.addEventListener('pointercancel',fin);car.addEventListener('pointerleave',fin);
+})();
+render();
+window.addEventListener('resize',()=>sync(false));
+</script>
+</body></html>

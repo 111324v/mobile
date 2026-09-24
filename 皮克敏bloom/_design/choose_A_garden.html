@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<link rel="icon" href="data:,">
+<title>选择植物 · 方案A 花园贴纸卡</title>
+<style>
+:root{
+  --sky-1:#bfe6f7; --sky-2:#d9f2e4; --grass:#8fd08a; --grass-dp:#5aa85f;
+  --ink:#123a1f; --green:#2ea44f; --green-dp:#1e7a39; --yellow:#ffd84d; --orange:#ffb547;
+  --paper:#fff; --muted:#7c8c81; --leaf:#4caf50;
+  --r-xl:28px; --r-md:16px; --r-round:999px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:#0e1a12;display:grid;place-items:center;font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;padding:16px}
+/* 手机外框 */
+.phone{width:390px;height:min(844px,calc(100vh - 32px));border-radius:44px;overflow:hidden;position:relative;
+  box-shadow:0 30px 80px rgba(0,0,0,.55);border:10px solid #101312;background:var(--sky-1);display:flex;flex-direction:column}
+/* 背景：天空 → 薄荷 → 草地（比主页更简洁，仅一朵云 + 一条像素草带） */
+.sky{position:absolute;inset:0;background:linear-gradient(180deg,var(--sky-1) 0%,var(--sky-2) 46%,#e8f7e2 74%,var(--grass) 100%)}
+.cloud{position:absolute;top:58px;right:-30px;width:150px;height:44px;border-radius:var(--r-round);
+  background:linear-gradient(180deg,#fff 0%,#fff 60%,#f0f7fc 100%);box-shadow:inset 0 -10px 14px rgba(185,212,232,.55)}
+.cloud:before,.cloud:after{content:"";position:absolute;background:#fff;border-radius:var(--r-round)}
+.cloud:before{width:54%;aspect-ratio:1;top:-58%;left:15%}
+.cloud:after{width:38%;aspect-ratio:1;top:-32%;right:13%}
+/* 顶部：标题 + 引言 */
+.hd{position:relative;z-index:5;padding:clamp(42px,7vh,66px) 28px 0}
+.h1{font-size:40px;font-weight:400;color:var(--ink);line-height:1.1;letter-spacing:-1px}
+.h1 b{display:block;font-weight:900}
+.under{width:96px;height:7px;border-radius:6px;background:var(--yellow);margin-top:8px}
+.quote{margin-top:14px;font-size:13px;font-style:italic;color:#2f6b3c;line-height:1.7;text-align:left}
+/* 轮播 */
+.carousel{flex:1;display:flex;flex-direction:column;justify-content:center;overflow:hidden;position:relative;z-index:5;
+  padding-top:18px;touch-action:pan-y;cursor:grab;user-select:none}
+.carousel:active{cursor:grabbing}
+.track{display:flex;gap:16px;padding:14px 0 20px;transition:transform .38s cubic-bezier(.32,.72,0,1);will-change:transform}
+.card{width:300px;flex-shrink:0;background:var(--paper);border-radius:var(--r-xl);border:3px solid #f3f7f2;
+  box-shadow:0 16px 48px rgba(0,0,0,.18);overflow:hidden;position:relative;transition:transform .38s ease,opacity .38s ease}
+.card.active{transform:scale(1) rotate(0);opacity:1;z-index:3}
+.card.side-left{transform:scale(.8) rotate(10deg);opacity:.72;z-index:1;transform-origin:right center}
+.card.side-right{transform:scale(.8) rotate(-10deg);opacity:.72;z-index:1;transform-origin:left center}
+/* 选中光晕 */
+.card.active:before{content:"";position:absolute;inset:-14px;border-radius:36px;z-index:-1;
+  background:radial-gradient(circle at 50% 45%,rgba(255,216,77,.55),rgba(255,216,77,0) 70%)}
+/* 图像区：薄荷渐变 + 贴纸植物 + 像素草带 */
+.art{width:calc(100% - 24px);height:clamp(116px,16.5vh,176px);margin:12px 12px 0;border-radius:var(--r-md);overflow:hidden;position:relative;
+  background:linear-gradient(165deg,#cdeef6,#dff6e6)}
+.art .sticker{position:absolute;left:0;right:0;top:6px;bottom:24px;display:grid;place-items:center}
+.art .sticker svg{width:clamp(96px,14vh,136px);height:clamp(96px,14vh,136px);filter:drop-shadow(0 6px 10px rgba(0,0,0,.18))}
+/* 像素草带（半调抖动锯齿） */
+.grass-strip{position:absolute;left:0;right:0;bottom:0;height:26px;background:var(--grass)}
+.grass-strip:before{content:"";position:absolute;left:0;right:0;top:-7px;height:8px;
+  background:repeating-linear-gradient(90deg,var(--grass) 0 6px,transparent 6px 12px)}
+.grass-strip .fl{position:absolute;bottom:7px;width:6px;height:6px;border-radius:50%;background:#fff}
+.grass-strip .fl.p{background:#ffb3c6}
+/* 卡体 */
+.body{padding:13px 18px 16px;display:flex;flex-direction:column;align-items:center;gap:5px}
+.name{font-size:24px;font-weight:800;color:var(--green-dp);letter-spacing:-.5px;display:flex;align-items:center;gap:6px}
+.leaves{display:flex;gap:2px}
+.leaves svg{width:14px;height:14px}
+.desc{font-size:13px;color:var(--muted);line-height:1.55;text-align:center}
+/* CTA：绿色渐变胶囊 + 白叶箭头 */
+.cta{margin-top:6px;width:100%;background:linear-gradient(135deg,var(--leaf),var(--green-dp));border-radius:var(--r-round);
+  padding:14px 20px;display:flex;align-items:center;justify-content:center;gap:10px;color:#fff;font-size:15px;font-weight:800;
+  cursor:pointer;box-shadow:0 6px 16px rgba(46,164,79,.35);transition:transform .15s}
+.cta:active{transform:scale(.97)}
+.cta .arrow{width:26px;height:26px;border-radius:var(--r-round);background:rgba(255,255,255,.22);display:grid;place-items:center}
+/* 分页：花苞点 */
+.dots{display:flex;align-items:center;justify-content:center;gap:8px;padding:0 0 clamp(14px,2.6vh,30px);position:relative;z-index:5}
+.dot{height:8px;border-radius:4px;background:rgba(18,58,31,.22);transition:all .3s;cursor:pointer;border:0;padding:0}
+.dot.active{width:24px;background:var(--green)}
+.dot:not(.active){width:8px}
+/* 阶段预览条 */
+.stages{display:flex;gap:5px;margin-top:12px}
+.stages i{width:22px;height:6px;border-radius:3px;background:rgba(255,255,255,.72);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.stages i.on{background:var(--green)}
+/* 返回圆钮 */
+.back{position:absolute;left:22px;bottom:clamp(14px,2.6vh,26px);width:44px;height:44px;border-radius:var(--r-round);background:rgba(255,255,255,.92);
+  display:grid;place-items:center;box-shadow:0 6px 16px rgba(0,0,0,.16);z-index:6;cursor:pointer}
+.hint{position:absolute;left:0;right:0;bottom:4px;text-align:center;font-size:11px;color:#2f6b3c;opacity:.75}
+</style></head>
+<body>
+<div class="phone">
+  <div class="sky"><div class="cloud"></div></div>
+
+  <div class="hd">
+    <div class="h1">Choose<b>Your Plant</b></div>
+    <div class="under"></div>
+    <div class="stages" id="stages"></div>
+    <div class="quote">Every time you walk toward the light,<br>I grow a little taller than yesterday.</div>
+  </div>
+
+  <div class="carousel" id="car"><div class="track" id="track"></div></div>
+  <div class="dots" id="dots"></div>
+  <div class="back"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#123a1f" stroke-width="2.4"><path d="M15 5l-7 7 7 7"/></svg></div>
+  <div class="hint">方案 A · 花园贴纸卡</div>
+</div>
+
+<script>
+const SP=[
+  {id:'strawberry',en:'Strawberry',name:'草莓',desc:'适合新手，喝水就开心',leaves:1},
+  {id:'sunflower', en:'Sunflower', name:'向日葵',desc:'爱晒太阳，追着光长大',leaves:1},
+  {id:'cactus',    en:'Cactus',    name:'仙人掌',desc:'耐得住忙碌与干燥',leaves:2},
+];
+const LEAF='<svg viewBox="0 0 24 24"><path d="M20 4c1 9-4 15-12 15 0-9 4-14 12-15z" fill="#4caf50"/><path d="M8 19c3-5 7-9 11-11" stroke="#2e7d32" stroke-width="1.3" fill="none" opacity=".55"/></svg>';
+const ART={
+  strawberry:'<circle cx="12" cy="13" r="7.4" fill="#e05252"/><path d="M12 5.6c1.6-2.4 4.4-3.2 6.6-2.4" stroke="#3d9a55" stroke-width="2" fill="none" stroke-linecap="round"/><g fill="#ffd9a0"><circle cx="9.5" cy="12" r="1"/><circle cx="14.5" cy="12" r="1"/><circle cx="12" cy="16" r="1"/></g>',
+  sunflower:'<circle cx="12" cy="13" r="4" fill="#8b5a2b"/><g fill="#ffd84d"><circle cx="12" cy="5.5" r="2.6"/><circle cx="18" cy="9" r="2.6"/><circle cx="18" cy="16" r="2.6"/><circle cx="12" cy="20.5" r="2.6"/><circle cx="6" cy="16" r="2.6"/><circle cx="6" cy="9" r="2.6"/></g>',
+  cactus:'<rect x="10" y="6" width="4" height="13" rx="2" fill="#3d9a55"/><rect x="5" y="10" width="4" height="6" rx="2" fill="#6fcf7a"/><rect x="15" y="8" width="4" height="5" rx="2" fill="#6fcf7a"/><path d="M7 19h10" stroke="#c96a00" stroke-width="2.4" stroke-linecap="round"/>'
+};
+const st=(k)=>'<svg viewBox="0 0 24 24" style="filter:none"><g stroke="#fff" stroke-width="1.4" stroke-linejoin="round" paint-order="stroke">'+(ART[k]||ART.strawberry)+'</g></svg>';
+const $=id=>document.getElementById(id);
+const len=SP.length; let cur=0, animEnd=0;
+
+function render(){
+  const order=Array.from({length:len*3},(_,k)=>k%len);
+  $('track').innerHTML=order.map(i=>{
+    const s=SP[i];
+    const cls='choose-card ';
+    return `<div class="card" data-i="${i}">
+      <div class="art">
+        <div class="sticker">${st(s.id)}</div>
+        <div class="grass-strip">
+          <i class="fl" style="left:16px"></i><i class="fl p" style="left:52px"></i>
+          <i class="fl" style="left:104px"></i><i class="fl p" style="left:180px"></i><i class="fl" style="left:238px"></i>
+        </div>
+      </div>
+      <div class="body">
+        <div class="name">${s.en.toLowerCase()}<span class="leaves">${LEAF.repeat(s.leaves)}</span></div>
+        <div class="desc">${s.desc}</div>
+        <div class="cta"><span class="arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>Choose this partner</div>
+      </div>
+    </div>`;
+  }).join('');
+  $('dots').innerHTML=Array.from({length:len},(_,k)=>`<button class="dot${k===cur?' active':''}" data-go="${k}"></button>`).join('');
+  $('stages').innerHTML=Array.from({length:6},(_,k)=>`<i class="${k<2?'on':''}"></i>`).join('');
+  $('dots').onclick=e=>{const d=e.target.closest('.dot');if(d)go(+d.dataset.go)};
+  sync(false);
+}
+function step(){const cs=$('track').children;return cs.length>1?cs[1].offsetLeft-cs[0].offsetLeft:0}
+function cardW(){const c=$('track').children[0];return c?c.offsetWidth:0}
+function offset(idx){return ($('car').clientWidth-cardW())/2-idx*step()}
+function sync(animate){
+  const t=$('track'), target=offset(cur+len);
+  if(animate){t.style.transition='';t.style.transform=`translateX(${target}px)`;animEnd=performance.now()+380}
+  else{t.style.transition='none';t.style.transform=`translateX(${target}px)`;void t.offsetWidth;t.style.transition='';animEnd=0}
+  t.querySelectorAll('.card').forEach(c=>{
+    const i=+c.dataset.i;
+    c.classList.toggle('active',i===cur);
+    c.classList.toggle('side-left',i<cur);
+    c.classList.toggle('side-right',i>cur);
+  });
+  $('dots').querySelectorAll('.dot').forEach((d,k)=>d.classList.toggle('active',k===cur));
+}
+function go(i){cur=((i%len)+len)%len;sync(true)}
+/* 跟手拖动 */
+(function(){
+  let down=false,x0=0,base=0,moved=0;
+  const t=$('track'),car=$('car');
+  const readX=()=>{try{return new DOMMatrixReadOnly(getComputedStyle(t).transform).m41||0}catch(e){return 0}};
+  car.addEventListener('pointerdown',e=>{down=true;x0=e.clientX;moved=0;base=readX();t.style.transition='none'});
+  car.addEventListener('pointermove',e=>{if(!down)return;moved=e.clientX-x0;t.style.transform=`translateX(${base+moved*.92}px)`});
+  const fin=()=>{if(!down)return;down=false;const dx=moved;
+    if(Math.abs(dx)>60||Math.abs(dx)/(step()||1)>.22)go(cur+(dx<0?1:-1)); else sync(true);moved=0};
+  car.addEventListener('pointerup',fin);car.addEventListener('pointercancel',fin);car.addEventListener('pointerleave',fin);
+})();
+render();
+window.addEventListener('resize',()=>sync(false));
+</script>
+</body></html>
